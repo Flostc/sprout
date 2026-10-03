@@ -341,6 +341,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       <div class="muted" id="heroRange"></div>
       <button class="cur-chip" id="curToggle" aria-label="Switch display currency"><span id="curLabel"></span><i class="ph ph-arrows-left-right"></i></button>
     </section>
+    <div class="nudge" id="bdNote" hidden><i class="ph ph-cake i"></i><span id="bdNoteText"></span></div>
     <button class="nudge" id="nudge" hidden><i class="ph ph-wallet i"></i><span id="nudgeText"></span><i class="ph ph-caret-right"></i></button>
     <section class="stack tight">
       <div class="sec"><h2>Budget this month</h2><span class="muted" id="budLeft"></span></div>
@@ -567,6 +568,15 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     <button type="button" class="sd-later" id="sdLater">Later. I'll add it in Settings</button>
   </section>
 </div>
+<div class="sd-scrim" id="bdPop" hidden>
+  <section class="sd-card" role="dialog" aria-modal="true" aria-labelledby="bdTitle">
+    <button type="button" class="round sd-x" id="bdClose" aria-label="Close"><i class="ph ph-x"></i></button>
+    <div class="sd-ic"><i class="ph-bold ph-cake"></i></div>
+    <h2 id="bdTitle"></h2>
+    <p id="bdText"></p>
+    <button type="button" class="save" id="bdOk">Thank you!</button>
+  </section>
+</div>
 <canvas id="sdConfetti" hidden></canvas>
 
 <div class="toast" id="toast" role="status"></div>
@@ -770,7 +780,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   function unlock() {
     // Open straight away on the copy saved on this phone, then refresh from Google.
     var cached = !S.raw && readLocal();
-    if (cached) { cached.today = localToday(); apply(cached); showApp(); }
+    if (cached) { cached.today = localToday(); apply(cached); showApp(); checkBirthday(); }
     return load_().then(showApp, function (err) {
       if (err && err.auth) signedOut(errText(err));
       else if (S.raw) toast('Showing saved numbers. ' + errText(err), true);
@@ -781,7 +791,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     $('refresh').firstElementChild.classList.add('spin');
     return run('getData', [S.pin, WHO]).then(function (raw) {
       if (S.pending) return;                            // a save is in flight; its own refresh follows
-      apply(raw); saveLocal(raw); checkSalaryDay();
+      apply(raw); saveLocal(raw); checkBirthday(); checkSalaryDay();
     }).finally(function () { if (!S.pending) $('refresh').firstElementChild.classList.remove('spin'); });
   }
   function reload() { return load_().catch(function (err) { if (err && err.auth) signedOut(errText(err)); else toast(errText(err), true); }); }
@@ -1088,12 +1098,38 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       .then(function () { btn.disabled = false; btn.lastChild.textContent = 'Export to Excel'; });
   };
 
+  // ---------- Birthdays ----------
+  // Month-day of each birthday, and the message shown in that person's app.
+  var BIRTHDAYS = {
+    trinh: { md: '10-27', title: 'Happy Birthday bb!',
+      text: 'Love you lots, Ben' }
+  };
+  var BD_SHOWN = false;
+  function checkBirthday() {
+    var today = localToday(), md = today.slice(5), year = today.slice(0, 4);
+    var partnerBd = BIRTHDAYS[PARTNER];
+    $('bdNote').hidden = !(partnerBd && partnerBd.md === md);
+    $('bdNoteText').textContent = "It's " + PARTNER_NAME + "'s birthday today";
+    var mine = BIRTHDAYS[WHO];
+    if (BD_SHOWN || !mine || mine.md !== md || load('bt-bday-' + WHO) === year) return;
+    BD_SHOWN = true;
+    $('sdPop').hidden = true;                           // the birthday wins if both would show
+    $('bdTitle').textContent = mine.title;
+    $('bdText').textContent = mine.text;
+    $('bdPop').hidden = false;
+    confetti(true);
+  }
+  function closeBirthday() { store('bt-bday-' + WHO, localToday().slice(0, 4)); $('bdPop').hidden = true; }
+  $('bdOk').onclick = closeBirthday;
+  $('bdClose').onclick = closeBirthday;
+  $('bdPop').addEventListener('click', function (e) { if (e.target === this) closeBirthday(); });
+
   // ---------- Salary Day ----------
   var SD_KEY = 'bt-salaryday-' + WHO, SD_SHOWN = false;
   // Malaysia time (UTC+8) for both phones. window.BT_NOW lets a test pretend it is another moment.
   function nowMYT() { var t = window.BT_NOW ? new Date(window.BT_NOW) : new Date(); return new Date(t.getTime() + (t.getTimezoneOffset() + 480) * 60000); }
   function checkSalaryDay() {
-    if (SD_SHOWN || !S.raw) return;
+    if (SD_SHOWN || !S.raw || !$('bdPop').hidden) return;
     var n = nowMYT(), day = S.raw.cycleStartDay || 22;
     var iso = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
     var key = periodOf(iso, day);                       // the budget month that starts on Salary Day
@@ -1133,13 +1169,14 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   $('sdSalary').onkeydown = function (e) { if (e.key === 'Enter') $('sdSave').click(); };
 
   // A short confetti burst in both people's colours. Skipped when the phone asks for reduced motion.
-  function confetti() {
+  function confetti(big) {
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var c = $('sdConfetti'), ctx = c.getContext('2d'), dpr = window.devicePixelRatio || 1;
     c.hidden = false; c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.scale(dpr, dpr);
-    var colours = ['#c6f135', '#ff5fa0', '#f6f7f0', WHO === 'ben' ? '#c6f135' : '#ff5fa0'];
+    var colours = big ? ['#ff5fa0', '#ff5fa0', '#c6f135', '#f6f7f0', '#ffd166'] : ['#c6f135', '#ff5fa0', '#f6f7f0', WHO === 'ben' ? '#c6f135' : '#ff5fa0'];
     var bits = [];
-    for (var i = 0; i < 110; i++) {
+    var count = big ? 220 : 110, life = big ? 4200 : 2600;
+    for (var i = 0; i < count; i++) {
       bits.push({ x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.38, vx: (Math.random() - 0.5) * 9, vy: -Math.random() * 11 - 4,
         w: 5 + Math.random() * 5, h: 8 + Math.random() * 6, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.3, col: colours[i % colours.length] });
     }
@@ -1149,10 +1186,10 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       ctx.clearRect(0, 0, innerWidth, innerHeight);
       bits.forEach(function (b) {
         b.vy += 0.28; b.vx *= 0.99; b.x += b.vx; b.y += b.vy; b.r += b.vr;
-        ctx.save(); ctx.globalAlpha = Math.max(0, 1 - age / 2600); ctx.translate(b.x, b.y); ctx.rotate(b.r);
+        ctx.save(); ctx.globalAlpha = Math.max(0, 1 - age / life); ctx.translate(b.x, b.y); ctx.rotate(b.r);
         ctx.fillStyle = b.col; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h * Math.abs(Math.cos(b.r * 2))); ctx.restore();
       });
-      if (age < 2600) requestAnimationFrame(frame); else { ctx.clearRect(0, 0, innerWidth, innerHeight); c.hidden = true; }
+      if (age < life) requestAnimationFrame(frame); else { ctx.clearRect(0, 0, innerWidth, innerHeight); c.hidden = true; }
     })(start);
   }
 
@@ -1281,7 +1318,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   $('tabAdd').onclick = function () { openSheet(null); };
   $('closeSheet').onclick = closeSheet;
   $('scrim').onclick = closeSheet;
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); if (e.key === 'Escape' && !$('sdPop').hidden) closeSalaryDay(true); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); if (e.key === 'Escape' && !$('sdPop').hidden) closeSalaryDay(true); if (e.key === 'Escape' && !$('bdPop').hidden) closeBirthday(); });
 
   function renderCats() {
     if (GROUPS.indexOf(S.cat) < 0) S.cat = GROUPS[0];
