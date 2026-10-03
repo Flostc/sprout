@@ -143,7 +143,9 @@ h2 { font-size: 19px; }
 .strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); margin-top: 12px; }
 .strip .num { font-size: 17px; }
 .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.tile { border-radius: 20px; padding: 14px; background: var(--card); border: 1px solid var(--line); display: grid; gap: 10px; min-width: 0; }
+.tile { border-radius: 20px; padding: 14px; background: var(--card); border: 1px solid var(--line); display: grid; gap: 10px; min-width: 0; width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer; transition: transform .12s ease, border-color .12s ease; }
+.tile:active { transform: scale(0.98); }
+.tile:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
 .tile .ic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
 .tile.over .ic { background: rgba(255, 122, 107, 0.14); color: var(--bad); }
 .tile .nm { font-weight: 500; font-size: 15px; }
@@ -333,6 +335,9 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
         <button type="button" class="round sm" id="actNext" aria-label="Next month"><i class="ph ph-caret-right"></i></button>
       </div>
       <input class="input search" id="actSearch" type="search" placeholder="Search items" aria-label="Search items">
+      <div class="chips" id="actFilter" hidden>
+        <button type="button" class="chip" id="actFilterClear" aria-pressed="true" aria-label="Show all categories"><span id="actFilterName"></span><i class="ph ph-x"></i></button>
+      </div>
     </div>
     <div class="act-total"><span class="muted" id="actCount"></span><span class="num" id="actTotal"></span></div>
     <div class="tx-list" id="actList"></div>
@@ -541,7 +546,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   function icon(cat) { return ICON[String(cat).toLowerCase()] || 'receipt'; }
 
   var S = { pin: '', raw: null, data: null, disp: OWN, eCur: OWN, cat: 'Food', tab: 'home', sel: null,
-    catMode: 'month', catKey: null, catYear: null, actWho: WHO, actKey: null, setWho: WHO, setKey: null,
+    catMode: 'month', catKey: null, catYear: null, actWho: WHO, actKey: null, actCat: null, setWho: WHO, setKey: null,
     forWho: WHO, editId: null, confirmDel: false };
   var PIN_KEY = 'bt-token-' + WHO, CUR_KEY = 'bt-disp-' + WHO, ECUR_KEY = 'bt-ecur-' + WHO;
   function store(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
@@ -722,10 +727,10 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       totalBud += b; totalSp += s;
       var note = !b ? 'No budget set' : over ? 'Over by ' + money(conv(s - b, OWN, rate), S.disp) : money(conv(b - s, OWN, rate), S.disp) + ' left';
       var pct = b ? Math.min(100, Math.max(0, s / b * 100)) : 100;
-      return '<div class="tile' + (over ? ' over' : '') + '"><span class="ic"><i class="ph ph-' + icon(g) + ' i"></i></span><div class="nm">' + esc(g) + '</div>' +
+      return '<button type="button" class="tile' + (over ? ' over' : '') + '" data-cat="' + esc(g) + '" aria-label="See ' + esc(g) + ' spends this month"><span class="ic"><i class="ph ph-' + icon(g) + ' i"></i></span><div class="nm">' + esc(g) + '</div>' +
         '<div class="meter' + (over ? ' bad' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
         '<div class="sub"><span class="num">' + money(conv(s, OWN, rate), S.disp) + '</span><span>' + (b ? 'of ' + short(conv(b, OWN, rate), S.disp) : '') + '</span></div>' +
-        '<div class="note">' + note + '</div></div>';
+        '<div class="note">' + note + '</div></button>';
     }).join('') || '<div class="empty" style="grid-column:1/-1">No budgets yet. Set them in Settings.</div>';
     $('budLeft').textContent = totalBud ? money(conv(Math.max(0, totalBud - totalSp), OWN, rate), S.disp) + ' left' : '';
 
@@ -761,10 +766,14 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     $('actPeriod').textContent = periodLabel(S.actKey);
     $('actPrev').disabled = i <= 0; $('actNext').disabled = i >= keys.length - 1;
     var q = $('actSearch').value.trim().toLowerCase();
-    var rows = spendsFor(S.actWho, S.actKey).filter(function (r) { return !q || (r[6] + ' ' + r[4] + ' ' + r[5]).toLowerCase().indexOf(q) >= 0; });
+    $('actFilter').hidden = !S.actCat;
+    $('actFilterName').textContent = S.actCat || '';
+    var rows = spendsFor(S.actWho, S.actKey).filter(function (r) {
+      return (!S.actCat || r[4] === S.actCat) && (!q || (r[6] + ' ' + r[4] + ' ' + r[5]).toLowerCase().indexOf(q) >= 0);
+    });
     var own = CUR[S.actWho], rate = rateFor(S.actKey);
     var total = rows.reduce(function (t, r) { return t + r[7]; }, 0);
-    $('actCount').textContent = rows.length + ' spend' + (rows.length === 1 ? '' : 's') + (q ? ' matching' : '');
+    $('actCount').textContent = rows.length + ' ' + (S.actCat ? S.actCat + ' ' : '') + 'spend' + (rows.length === 1 ? '' : 's') + (q ? ' matching' : '');
     $('actTotal').textContent = money(conv(total, own, rate), S.disp);
     $('actList').innerHTML = rows.length ? txHtml(rows, S.actKey) : '<div class="empty">Nothing here.</div>';
   }
@@ -1005,7 +1014,14 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     Object.keys(TABS).forEach(function (k) { $(k).hidden = k !== t; $(TABS[k]).setAttribute('aria-current', k === t ? 'page' : 'false'); });
     window.scrollTo(0, 0);
   }
-  Object.keys(TABS).forEach(function (k) { $(TABS[k]).onclick = function () { showTab(k); }; });
+  Object.keys(TABS).forEach(function (k) { $(TABS[k]).onclick = function () { if (k === 'act') { S.actCat = null; renderActivity(); } showTab(k); }; });
+  // Tap a budget tile: that category's spends for the month.
+  $('tiles').onclick = function (e) {
+    var t = e.target.closest('[data-cat]'); if (!t) return;
+    S.actWho = WHO; S.actKey = S.data.currentKey; S.actCat = t.getAttribute('data-cat');
+    $('actSearch').value = ''; renderActivity(); showTab('act');
+  };
+  $('actFilterClear').onclick = function () { S.actCat = null; renderActivity(); };
   $('txAll').onclick = function () { S.actWho = WHO; S.actKey = S.data.currentKey; renderActivity(); showTab('act'); };
   $('nudge').onclick = function () { S.setWho = WHO; S.setKey = S.data.currentKey; renderSettings(); showTab('set'); };
   $('actMe').onclick = function () { S.actWho = WHO; renderActivity(); };
