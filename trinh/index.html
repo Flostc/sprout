@@ -437,11 +437,11 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       </div>
       <div class="field">
         <label for="salary" id="salaryLbl">Net salary</label>
-        <input class="input num" id="salary" inputmode="decimal" autocomplete="off" placeholder="Include any bonus paid this month">
+        <input class="input num" id="salary" data-num inputmode="decimal" autocomplete="off" placeholder="Include any bonus paid this month">
       </div>
       <div class="field">
         <label for="rate">Exchange rate, shared: RM 1 = ? ₫</label>
-        <input class="input num" id="rate" inputmode="decimal" autocomplete="off">
+        <input class="input num" id="rate" data-num inputmode="decimal" autocomplete="off">
       </div>
       <div class="err" id="monthErr" role="alert"></div>
       <button class="btn2 accent" id="saveMonth" type="button">Save month</button>
@@ -458,7 +458,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       <h3 id="goalSetH">Savings target</h3>
       <div class="field">
         <label for="goalIn" id="goalLbl">Target for the year</label>
-        <input class="input num" id="goalIn" inputmode="decimal" autocomplete="off">
+        <input class="input num" id="goalIn" data-num inputmode="decimal" autocomplete="off">
       </div>
       <div class="err" id="goalErr" role="alert"></div>
       <button class="btn2 accent" id="saveGoal" type="button">Save target</button>
@@ -525,7 +525,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     <div class="field">
       <label for="amount">Amount</label>
       <div class="amount">
-        <input class="input" id="amount" inputmode="decimal" autocomplete="off" placeholder="0">
+        <input class="input" id="amount" data-num inputmode="decimal" autocomplete="off" placeholder="0">
         <div class="seg" role="group" aria-label="Currency paid in">
           <button type="button" id="eMYR" aria-pressed="true">MYR</button>
           <button type="button" id="eVND" aria-pressed="false">VND</button>
@@ -561,7 +561,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     <p id="sdText"></p>
     <div class="field">
       <label for="sdSalary" id="sdLabel">Net salary</label>
-      <input class="input" id="sdSalary" inputmode="decimal" autocomplete="off" placeholder="0">
+      <input class="input" id="sdSalary" data-num inputmode="decimal" autocomplete="off" placeholder="0">
     </div>
     <div class="err" id="sdErr" role="alert"></div>
     <button type="button" class="save" id="sdSave">Save salary</button>
@@ -691,6 +691,26 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     var unit = cur === 'VND' ? (a >= 1e6 ? [1e6, 'M'] : [1e3, 'k']) : (a >= 1000 ? [1e3, 'k'] : [1, '']);
     return (Math.round(v / unit[0] * 10) / 10).toString() + unit[1];
   }
+  // 1234567.5 -> "1,234,567.5" (for number boxes and plain figures).
+  function fmtNum(v) {
+    if (v === '' || v == null || !isFinite(Number(v))) return '';
+    return Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+  // Group digits with commas while typing, keeping the cursor after the same digit.
+  function groupDigits(el) {
+    var v = el.value, caret = el.selectionStart == null ? v.length : el.selectionStart;
+    var before = v.slice(0, caret).replace(/[^0-9.]/g, '').length;
+    var clean = v.replace(/[^0-9.]/g, ''), dot = clean.indexOf('.');
+    var intPart = (dot < 0 ? clean : clean.slice(0, dot)).replace(/^0+(?=\d)/, '');
+    var decPart = dot < 0 ? '' : '.' + clean.slice(dot + 1).replace(/\./g, '').slice(0, 2);
+    var out = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + decPart;
+    if (out === v) return;
+    el.value = out;
+    var pos = 0, seen = 0;
+    while (pos < out.length && seen < before) { if (/[0-9.]/.test(out[pos])) seen++; pos++; }
+    try { el.setSelectionRange(pos, pos); } catch (e) {}
+  }
+  document.addEventListener('input', function (e) { if (e.target.matches && e.target.matches('input[data-num]')) groupDigits(e.target); });
   function conv(v, from, rate) { if (from === S.disp || !rate) return v; return S.disp === 'MYR' ? v / rate : v * rate; }
   function toast(msg, bad) {
     var t = $('toast'); t.textContent = msg; t.className = 'toast show' + (bad ? ' bad' : '');
@@ -820,13 +840,13 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       var pct = b ? Math.min(100, Math.max(0, s / b * 100)) : 100;
       return '<button type="button" class="tile' + (over ? ' over' : '') + '" data-cat="' + esc(g) + '" aria-label="See ' + esc(g) + ' spends this month"><span class="ic"><i class="ph ph-' + icon(g) + ' i"></i></span><div class="nm">' + esc(g) + '</div>' +
         '<div class="meter' + (over ? ' bad' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
-        '<div class="sub"><span class="num">' + money(conv(s, OWN, rate), S.disp) + '</span><span>' + (b ? 'of ' + short(conv(b, OWN, rate), S.disp) : '') + '</span></div>' +
+        '<div class="sub"><span class="num">' + money(conv(s, OWN, rate), S.disp) + '</span><span>' + (b ? 'of ' + fmtNum(S.disp === 'VND' ? Math.round(conv(b, OWN, rate)) : Math.round(conv(b, OWN, rate) * 100) / 100) : '') + '</span></div>' +
         '<div class="note">' + note + '</div></button>';
     }).join('') || '<div class="empty" style="grid-column:1/-1">No budgets yet. Set them in Settings.</div>';
     $('budLeft').textContent = totalBud ? money(conv(Math.max(0, totalBud - totalSp), OWN, rate), S.disp) + ' left' : '';
 
     var rows = spendsFor(WHO, m.key);
-    $('txMonth').textContent = monthName(m.key) + ', ' + rows.length + ' spend' + (rows.length === 1 ? '' : 's');
+    $('txMonth').textContent = monthName(m.key) + ', ' + rows.length.toLocaleString('en-US') + ' spend' + (rows.length === 1 ? '' : 's');
     $('txList').innerHTML = rows.length ? txHtml(rows.slice(0, 8), m.key) : '<div class="empty">No spends this month yet. Tap + to add your first one.</div>';
     $('txAll').hidden = rows.length <= 8;
   }
@@ -864,7 +884,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     });
     var own = CUR[S.actWho], rate = rateFor(S.actKey);
     var total = rows.reduce(function (t, r) { return t + r[7]; }, 0);
-    $('actCount').textContent = rows.length + ' ' + (S.actCat ? S.actCat + ' ' : '') + 'spend' + (rows.length === 1 ? '' : 's') + (q ? ' matching' : '');
+    $('actCount').textContent = rows.length.toLocaleString('en-US') + ' ' + (S.actCat ? S.actCat + ' ' : '') + 'spend' + (rows.length === 1 ? '' : 's') + (q ? ' matching' : '');
     $('actTotal').textContent = money(conv(total, own, rate), S.disp);
     $('actList').innerHTML = rows.length ? txHtml(rows, S.actKey) : '<div class="empty">Nothing here.</div>';
   }
@@ -1022,18 +1042,18 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     var m = S.raw.months[S.setKey] || {};
     $('setPeriod').textContent = periodLabel(S.setKey);
     $('salaryLbl').textContent = NAMES[w] + "'s net salary (" + cur + ')';
-    if (document.activeElement !== $('salary')) $('salary').value = m[w] != null ? m[w] : '';
-    if (document.activeElement !== $('rate')) $('rate').value = m.rate || rateFor(S.setKey) || '';
+    if (document.activeElement !== $('salary')) $('salary').value = m[w] != null ? fmtNum(m[w]) : '';
+    if (document.activeElement !== $('rate')) $('rate').value = fmtNum(m.rate || rateFor(S.setKey) || '');
     $('budH').textContent = NAMES[w] + "'s monthly budgets (" + cur + ')';
     var bud = S.raw.budgets[w] || {};
     $('budInputs').innerHTML = GROUPS.map(function (g, i) {
       return '<div class="bud-row"><span class="ic"><i class="ph ph-' + icon(g) + '"></i></span><label for="bud' + i + '">' + esc(g) + '</label>' +
-        '<input class="input" id="bud' + i + '" data-g="' + esc(g) + '" inputmode="decimal" autocomplete="off" value="' + (bud[g] || '') + '" placeholder="0"></div>';
+        '<input class="input" id="bud' + i + '" data-num data-g="' + esc(g) + '" inputmode="decimal" autocomplete="off" value="' + fmtNum(bud[g] || '') + '" placeholder="0"></div>';
     }).join('');
     var year = S.data.currentKey.slice(0, 4);
     $('goalSetH').textContent = NAMES[w] + "'s savings target for " + year;
     $('goalLbl').textContent = 'Target for the year (' + cur + ')';
-    if (document.activeElement !== $('goalIn')) $('goalIn').value = S.raw.goals[year] && S.raw.goals[year][w] != null ? S.raw.goals[year][w] : '';
+    if (document.activeElement !== $('goalIn')) $('goalIn').value = S.raw.goals[year] && S.raw.goals[year][w] != null ? fmtNum(S.raw.goals[year][w]) : '';
     if (document.activeElement !== $('cycle')) $('cycle').value = S.raw.cycleStartDay;
     $('cycleHint').textContent = 'Spends on or after this day count toward the next month. Now: ' + periodLabel(S.data.currentKey) + ' runs ' + periodRange(S.data.currentKey, S.raw.cycleStartDay) + '.';
     $('dataLink').href = S.raw.dataUrl;
@@ -1300,7 +1320,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       S.eCur = useOrig ? spend[9] : CUR[spend[3]];
       var amt = useOrig ? spend[8] : spend[7];
       $('refund').checked = amt < 0;
-      $('amount').value = Math.abs(amt);
+      $('amount').value = fmtNum(Math.abs(amt));
       $('item').value = spend[6]; $('date').value = spend[2];
     } else {
       S.forWho = WHO; $('refund').checked = false; $('amount').value = ''; $('item').value = '';
