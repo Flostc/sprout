@@ -191,6 +191,22 @@ h2 { font-size: 19px; }
 .cbar .pc { font-size: 12px; color: var(--ink-3); text-align: right; }
 .total-row { border-top: 1px solid var(--line); padding-top: 12px; }
 
+/* Month picker */
+.period-btn { border: 0; background: none; color: var(--ink); font: inherit; font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; gap: 9px; padding: 8px 12px; border-radius: 12px; min-width: 0; }
+.period-btn::after { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: translateY(-2px) rotate(45deg); transition: transform .18s ease; flex: none; }
+.period-btn[aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
+.period-btn:active, .period-btn[aria-expanded="true"] { background: var(--card-2); }
+.mpick { border-radius: 18px; background: var(--bg-2); border: 1px solid var(--line); padding: 12px; display: grid; gap: 10px; animation: mpick-in .18s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes mpick-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.mpick .yr { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 600; }
+.mpick .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.mpick .grid.years { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mpick .m { border: 1px solid var(--line); background: var(--card); color: var(--ink-2); border-radius: 12px; padding: 11px 0; font: inherit; font-size: 14px; font-weight: 500; }
+.mpick .m.now { border-color: color-mix(in srgb, var(--accent) 60%, transparent); color: var(--ink); }
+.mpick .m[aria-current="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+.mpick .m:disabled { opacity: .3; }
+.mpick .m:not(:disabled):active { transform: scale(0.96); }
+
 /* Tab bar */
 .tabbar { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); transform: translateX(-50%); z-index: 20;
   display: flex; align-items: center; gap: 18px; padding: 8px 14px; border-radius: 999px;
@@ -334,7 +350,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     <div class="together">
       <div class="period">
         <button type="button" class="round sm" id="actPrev" aria-label="Previous month"><i class="ph ph-caret-left"></i></button>
-        <span id="actPeriod"></span>
+        <button type="button" class="period-btn" id="actPeriod" aria-haspopup="dialog" aria-expanded="false"></button>
         <button type="button" class="round sm" id="actNext" aria-label="Next month"><i class="ph ph-caret-right"></i></button>
       </div>
       <input class="input search" id="actSearch" type="search" placeholder="Search items" aria-label="Search items">
@@ -371,7 +387,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       <div class="together">
         <div class="period">
           <button type="button" class="round sm" id="catPrev" aria-label="Previous period"><i class="ph ph-caret-left"></i></button>
-          <span id="catPeriod"></span>
+          <button type="button" class="period-btn" id="catPeriod" aria-haspopup="dialog" aria-expanded="false"></button>
           <button type="button" class="round sm" id="catNext" aria-label="Next period"><i class="ph ph-caret-right"></i></button>
         </div>
         <div class="cbars" id="catBars"></div>
@@ -401,7 +417,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     <section class="panel">
       <div class="period">
         <button type="button" class="round sm" id="setPrev" aria-label="Previous month"><i class="ph ph-caret-left"></i></button>
-        <h3 id="setPeriod"></h3>
+        <button type="button" class="period-btn" id="setPeriod" aria-haspopup="dialog" aria-expanded="false"></button>
         <button type="button" class="round sm" id="setNext" aria-label="Next month"><i class="ph ph-caret-right"></i></button>
       </div>
       <div class="field">
@@ -965,8 +981,8 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   function busy(btn, on, label) { btn.disabled = on; if (label) btn.textContent = on ? 'Saving...' : label; }
   $('setMe').onclick = function () { S.setWho = WHO; renderSettings(); };
   $('setPartner').onclick = function () { S.setWho = PARTNER; renderSettings(); };
-  $('setPrev').onclick = function () { S.setKey = shiftPeriod(S.setKey, -1); renderSettings(); };
-  $('setNext').onclick = function () { S.setKey = shiftPeriod(S.setKey, 1); renderSettings(); };
+  $('setPrev').onclick = function () { closePicker(); S.setKey = shiftPeriod(S.setKey, -1); renderSettings(); };
+  $('setNext').onclick = function () { closePicker(); S.setKey = shiftPeriod(S.setKey, 1); renderSettings(); };
   $('saveMonth').onclick = function () {
     var sal = numIn('salary'), rate = numIn('rate');
     if (sal !== '' && !isFinite(sal)) { $('monthErr').textContent = 'Salary must be a number.'; return; }
@@ -1021,9 +1037,76 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       .then(function () { btn.disabled = false; btn.lastChild.textContent = 'Export to Excel'; });
   };
 
+  // ---------- month picker ----------
+  var MP = null;
+  function closePicker() {
+    if (!MP) return;
+    MP.el.remove(); MP.btn.setAttribute('aria-expanded', 'false'); MP = null;
+  }
+  // opts: {key, years: [yyyy...], allowed(key) -> bool, onPick(key)} or {yearOnly: true, year, years, onPick(year)}
+  function openPicker(btn, opts) {
+    if (MP && MP.btn === btn) { closePicker(); return; }
+    closePicker();
+    var el = document.createElement('div');
+    el.className = 'mpick'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', opts.yearOnly ? 'Pick a year' : 'Pick a month');
+    btn.closest('.period').insertAdjacentElement('afterend', el);
+    MP = { el: el, btn: btn, opts: opts, year: opts.yearOnly ? null : +opts.key.slice(0, 4) };
+    btn.setAttribute('aria-expanded', 'true');
+    drawPicker();
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b || b.disabled) return;
+      if (b.hasAttribute('data-step')) { MP.year += +b.getAttribute('data-step'); drawPicker(); return; }
+      var v = b.getAttribute('data-v'), pick = MP.opts.onPick;
+      closePicker(); pick(v);
+    });
+  }
+  function drawPicker() {
+    var o = MP.opts, nowKey = S.data.currentKey;
+    if (o.yearOnly) {
+      MP.el.innerHTML = '<div class="grid years">' + o.years.map(function (y) {
+        return '<button type="button" class="m' + (y === nowKey.slice(0, 4) ? ' now' : '') + '" data-v="' + y + '" aria-current="' + (y === o.year) + '">' + y + '</button>';
+      }).join('') + '</div>';
+      return;
+    }
+    var y = MP.year, ys = o.years.map(Number), lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    var html = '<div class="yr"><button type="button" class="round sm" data-step="-1" aria-label="Previous year"' + (y <= lo ? ' disabled' : '') + '><i class="ph ph-caret-left"></i></button>' +
+      '<span>' + y + '</span><button type="button" class="round sm" data-step="1" aria-label="Next year"' + (y >= hi ? ' disabled' : '') + '><i class="ph ph-caret-right"></i></button></div><div class="grid">';
+    for (var m = 1; m <= 12; m++) {
+      var k = y + '-' + (m < 10 ? '0' : '') + m;
+      html += '<button type="button" class="m' + (k === nowKey ? ' now' : '') + '" data-v="' + k + '" aria-current="' + (k === o.key) + '"' +
+        (o.allowed(k) ? '' : ' disabled') + ' aria-label="' + MONTH_FULL[m - 1] + ' ' + y + '">' + MON[m - 1] + '</button>';
+    }
+    MP.el.innerHTML = html + '</div>';
+  }
+  function dataKeys() { return S.data.months.map(function (m) { return m.key; }); }
+  function dataYears() { var ys = []; dataKeys().forEach(function (k) { var y = k.slice(0, 4); if (ys.indexOf(y) < 0) ys.push(y); }); return ys; }
+  document.addEventListener('click', function (e) { if (MP && !MP.el.contains(e.target) && !MP.btn.contains(e.target)) closePicker(); }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && MP) { var b = MP.btn; closePicker(); b.focus(); } });
+  $('actPeriod').onclick = function () {
+    var keys = dataKeys();
+    openPicker(this, { key: S.actKey, years: dataYears(), allowed: function (k) { return keys.indexOf(k) >= 0; },
+      onPick: function (k) { S.actKey = k; renderActivity(); } });
+  };
+  $('setPeriod').onclick = function () {
+    var ys = dataYears(), next = String(+S.data.currentKey.slice(0, 4) + 1);
+    if (ys.indexOf(next) < 0) ys.push(next);
+    openPicker(this, { key: S.setKey, years: ys, allowed: function () { return true; },
+      onPick: function (k) { S.setKey = k; renderSettings(); } });
+  };
+  $('catPeriod').onclick = function () {
+    if (S.catMode === 'year') {
+      openPicker(this, { yearOnly: true, year: S.catYear, years: dataYears(), onPick: function (y) { S.catYear = y; renderCatBreakdown(); } });
+      return;
+    }
+    var keys = dataKeys();
+    openPicker(this, { key: S.catKey, years: dataYears(), allowed: function (k) { return keys.indexOf(k) >= 0; },
+      onPick: function (k) { S.catKey = k; renderCatBreakdown(); } });
+  };
+
   // ---------- tabs ----------
   var TABS = { home: 'tabHome', act: 'tabAct', dash: 'tabDash', set: 'tabSet' };
   function showTab(t) {
+    closePicker();
     S.tab = t;
     Object.keys(TABS).forEach(function (k) { $(k).hidden = k !== t; $(TABS[k]).setAttribute('aria-current', k === t ? 'page' : 'false'); });
     window.scrollTo(0, 0);
@@ -1040,8 +1123,8 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   $('nudge').onclick = function () { S.setWho = WHO; S.setKey = S.data.currentKey; renderSettings(); showTab('set'); };
   $('actMe').onclick = function () { S.actWho = WHO; renderActivity(); };
   $('actPartner').onclick = function () { S.actWho = PARTNER; renderActivity(); };
-  $('actPrev').onclick = function () { var k = S.data.months.map(function (m) { return m.key; }), i = k.indexOf(S.actKey); if (i > 0) { S.actKey = k[i - 1]; renderActivity(); } };
-  $('actNext').onclick = function () { var k = S.data.months.map(function (m) { return m.key; }), i = k.indexOf(S.actKey); if (i < k.length - 1) { S.actKey = k[i + 1]; renderActivity(); } };
+  $('actPrev').onclick = function () { closePicker(); var k = S.data.months.map(function (m) { return m.key; }), i = k.indexOf(S.actKey); if (i > 0) { S.actKey = k[i - 1]; renderActivity(); } };
+  $('actNext').onclick = function () { closePicker(); var k = S.data.months.map(function (m) { return m.key; }), i = k.indexOf(S.actKey); if (i < k.length - 1) { S.actKey = k[i + 1]; renderActivity(); } };
   $('actSearch').oninput = renderActivity;
   document.addEventListener('click', function (e) {
     var b = e.target.closest('.tx[data-id]'); if (!b) return;
@@ -1129,16 +1212,16 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   // ---------- misc ----------
   $('curToggle').onclick = function () { S.disp = S.disp === 'MYR' ? 'VND' : 'MYR'; store(CUR_KEY, S.disp); render(); };
   $('refresh').onclick = reload;
-  $('catMonth').onclick = function () { S.catMode = 'month'; renderCatBreakdown(); };
-  $('catYear').onclick = function () { S.catMode = 'year'; renderCatBreakdown(); };
+  $('catMonth').onclick = function () { closePicker(); S.catMode = 'month'; renderCatBreakdown(); };
+  $('catYear').onclick = function () { closePicker(); S.catMode = 'year'; renderCatBreakdown(); };
   function stepCat(d) {
     var months = S.data.months;
     if (S.catMode === 'month') { var keys = months.map(function (x) { return x.key; }), i = keys.indexOf(S.catKey) + d; if (i >= 0 && i < keys.length) S.catKey = keys[i]; }
     else { var years = []; months.forEach(function (x) { var y = x.key.slice(0, 4); if (years.indexOf(y) < 0) years.push(y); }); var j = years.indexOf(S.catYear) + d; if (j >= 0 && j < years.length) S.catYear = years[j]; }
     renderCatBreakdown();
   }
-  $('catPrev').onclick = function () { stepCat(-1); };
-  $('catNext').onclick = function () { stepCat(1); };
+  $('catPrev').onclick = function () { closePicker(); stepCat(-1); };
+  $('catNext').onclick = function () { closePicker(); stepCat(1); };
   $('pinGo').onclick = function () { signIn($('pin').value.trim()); };
   $('pin').onkeydown = function (e) { if (e.key === 'Enter') signIn(this.value.trim()); };
   $('lock').onclick = function () { var t = S.pin; run('logout', [t, WHO]).catch(function () {}); signedOut(''); };
