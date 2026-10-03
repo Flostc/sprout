@@ -641,7 +641,25 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   var DATA_KEY = 'bt-data-' + WHO;
   function saveLocal(raw) { try { localStorage.setItem(DATA_KEY, JSON.stringify(raw)); } catch (e) {} }
   function readLocal() { try { var s = localStorage.getItem(DATA_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
-  function localToday() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  // "Today" is the phone's own date, so it follows the phone when it changes time zone on a trip.
+  // window.BT_NOW / BT_TZ only exist in tests, to pretend to be another moment or place.
+  function localToday() {
+    var d = window.BT_NOW ? new Date(window.BT_NOW) : new Date();
+    try {
+      var p = {};
+      new Intl.DateTimeFormat('en-US', { timeZone: window.BT_TZ || undefined, year: 'numeric', month: '2-digit', day: '2-digit' })
+        .formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
+      if (p.year && p.month && p.day) return p.year + '-' + p.month + '-' + p.day;
+    } catch (e) {}
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // Currency for a new spend from the phone's time zone: Vietnam -> VND, Malaysia -> MYR, anywhere else -> last used.
+  var ZONE_CURRENCY = { 'Asia/Ho_Chi_Minh': 'VND', 'Asia/Saigon': 'VND', 'Asia/Kuala_Lumpur': 'MYR', 'Asia/Kuching': 'MYR' };
+  function zoneCurrency() {
+    var tz = window.BT_TZ;
+    if (!tz) { try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { tz = ''; } }
+    return ZONE_CURRENCY[tz] || null;
+  }
   function signedOut(msg) {
     store(PIN_KEY, null); store(DATA_KEY, null); store('bt-salaryday-' + WHO, null); S.pin = ''; $('pin').value = '';
     $('app').hidden = true; $('tabbar').hidden = true; $('pinView').hidden = false;
@@ -743,6 +761,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   }
   function showApp() { $('pinView').hidden = true; $('app').hidden = false; $('tabbar').hidden = false; }
   function apply(raw) {
+    raw.today = localToday();
     S.raw = raw; S.data = derive(raw);
     if (!S.actKey) S.actKey = S.data.currentKey;
     if (!S.setKey) S.setKey = S.data.currentKey;
@@ -1248,8 +1267,8 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       $('item').value = spend[6]; $('date').value = spend[2];
     } else {
       S.forWho = WHO; $('refund').checked = false; $('amount').value = ''; $('item').value = '';
-      $('date').value = S.raw.today;
-      S.eCur = load(ECUR_KEY) || OWN;
+      $('date').value = localToday();
+      S.eCur = zoneCurrency() || load(ECUR_KEY) || OWN;
     }
     renderCats(); renderConv();
     $('scrim').hidden = false; $('sheet').hidden = false;
