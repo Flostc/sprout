@@ -207,6 +207,20 @@ h2 { font-size: 19px; }
 .mpick .m:disabled { opacity: .3; }
 .mpick .m:not(:disabled):active { transform: scale(0.96); }
 
+/* Salary Day */
+.sd-scrim { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.6); display: grid; place-items: center; padding: 16px; }
+.sd-card { position: relative; width: 100%; max-width: 380px; border-radius: 28px; padding: 26px 22px 20px; background: linear-gradient(170deg, var(--card-2), var(--bg-2)); border: 1px solid var(--line);
+  display: grid; gap: 14px; text-align: center; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5); animation: sd-in .35s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes sd-in { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: none; } }
+.sd-card .sd-ic { width: 64px; height: 64px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-size: 30px; box-shadow: 0 10px 30px var(--glow); }
+.sd-card h2 { font-size: 26px; letter-spacing: -0.03em; }
+.sd-card p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.sd-card .field { text-align: left; }
+.sd-card .input { font-family: var(--font-mono); font-size: 24px; text-align: center; }
+.sd-card .sd-x { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; }
+.sd-later { border: 0; background: none; color: var(--ink-3); font: inherit; font-size: 14px; padding: 6px; }
+#sdConfetti { position: fixed; inset: 0; z-index: 51; pointer-events: none; width: 100%; height: 100%; }
+
 /* Tab bar */
 .tabbar { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); transform: translateX(-50%); z-index: 20;
   display: flex; align-items: center; gap: 18px; padding: 8px 14px; border-radius: 999px;
@@ -538,6 +552,23 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   </form>
 </section>
 
+<div class="sd-scrim" id="sdPop" hidden>
+  <section class="sd-card" role="dialog" aria-modal="true" aria-labelledby="sdTitle">
+    <button type="button" class="round sd-x" id="sdClose" aria-label="Close"><i class="ph ph-x"></i></button>
+    <div class="sd-ic"><i class="ph-bold ph-confetti"></i></div>
+    <h2 id="sdTitle">It's Salary Day!</h2>
+    <p id="sdText"></p>
+    <div class="field">
+      <label for="sdSalary" id="sdLabel">Net salary</label>
+      <input class="input" id="sdSalary" inputmode="decimal" autocomplete="off" placeholder="0">
+    </div>
+    <div class="err" id="sdErr" role="alert"></div>
+    <button type="button" class="save" id="sdSave">Save salary</button>
+    <button type="button" class="sd-later" id="sdLater">Later. I'll add it in Settings</button>
+  </section>
+</div>
+<canvas id="sdConfetti" hidden></canvas>
+
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -612,7 +643,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   function readLocal() { try { var s = localStorage.getItem(DATA_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
   function localToday() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function signedOut(msg) {
-    store(PIN_KEY, null); store(DATA_KEY, null); S.pin = ''; $('pin').value = '';
+    store(PIN_KEY, null); store(DATA_KEY, null); store('bt-salaryday-' + WHO, null); S.pin = ''; $('pin').value = '';
     $('app').hidden = true; $('tabbar').hidden = true; $('pinView').hidden = false;
     $('pinErr').textContent = msg || '';
   }
@@ -730,7 +761,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   function load_() {
     $('refresh').firstElementChild.classList.add('spin');
     return run('getData', [S.pin, WHO]).then(function (raw) {
-      apply(raw); saveLocal(raw);
+      apply(raw); saveLocal(raw); checkSalaryDay();
     }).finally(function () { $('refresh').firstElementChild.classList.remove('spin'); });
   }
   function reload() { return load_().catch(function (err) { if (err && err.auth) signedOut(errText(err)); else toast(errText(err), true); }); }
@@ -1037,6 +1068,74 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       .then(function () { btn.disabled = false; btn.lastChild.textContent = 'Export to Excel'; });
   };
 
+  // ---------- Salary Day ----------
+  var SD_KEY = 'bt-salaryday-' + WHO, SD_SHOWN = false;
+  // Malaysia time (UTC+8) for both phones. window.BT_NOW lets a test pretend it is another moment.
+  function nowMYT() { var t = window.BT_NOW ? new Date(window.BT_NOW) : new Date(); return new Date(t.getTime() + (t.getTimezoneOffset() + 480) * 60000); }
+  function checkSalaryDay() {
+    if (SD_SHOWN || !S.raw) return;
+    var n = nowMYT(), day = S.raw.cycleStartDay || 22;
+    var iso = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+    var key = periodOf(iso, day);                       // the budget month that starts on Salary Day
+    var startIso = shiftPeriod(key, -1) + '-' + String(day).padStart(2, '0');
+    var isTheDay = iso === startIso;
+    if (iso < startIso || (isTheDay && n.getHours() < 8)) return;   // before Salary Day 08:00
+    var m = S.raw.months[key];
+    if (m && m[WHO] != null) return;                     // salary already in
+    if (load(SD_KEY) === key) return;                    // "Later" pressed for this month
+    SD_SHOWN = true;
+    S.sdKey = key;
+    var cur = OWN;
+    $('sdTitle').textContent = isTheDay ? "It's Salary Day!" : 'Add your ' + monthName(key) + ' salary';
+    $('sdText').textContent = (isTheDay ? 'A new month starts today. ' : '') + 'Add your ' + monthName(key) + ' net salary (' + periodRange(key, day) + ') so the app can work out what is left to save.';
+    $('sdLabel').textContent = NAME + "'s net salary (" + cur + ')';
+    $('sdSalary').value = ''; $('sdErr').textContent = '';
+    $('sdPop').hidden = false;
+    setTimeout(function () { $('sdSalary').focus(); }, 350);
+    if (isTheDay) confetti();
+  }
+  function closeSalaryDay(remember) {
+    if (remember && S.sdKey) store(SD_KEY, S.sdKey);
+    $('sdPop').hidden = true;
+  }
+  $('sdLater').onclick = function () { closeSalaryDay(true); toast('You can add it any time in Settings'); };
+  $('sdClose').onclick = function () { closeSalaryDay(true); };
+  $('sdPop').addEventListener('click', function (e) { if (e.target === this) closeSalaryDay(true); });
+  $('sdSave').onclick = function () {
+    var v = $('sdSalary').value.replace(/[,\s]/g, '');
+    if (!(Number(v) > 0)) { $('sdErr').textContent = 'Enter your net salary, numbers only.'; return; }
+    var btn = this; btn.disabled = true; btn.textContent = 'Saving...';
+    run('saveMonth', [S.pin, WHO, { period: S.sdKey, rate: rateFor(S.sdKey), salary: Number(v), forWho: WHO }]).then(function () {
+      closeSalaryDay(false); toast(monthName(S.sdKey) + ' salary saved'); return reload();
+    }, function (e) { $('sdErr').textContent = errText(e); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Save salary'; });
+  };
+  $('sdSalary').onkeydown = function (e) { if (e.key === 'Enter') $('sdSave').click(); };
+
+  // A short confetti burst in both people's colours. Skipped when the phone asks for reduced motion.
+  function confetti() {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var c = $('sdConfetti'), ctx = c.getContext('2d'), dpr = window.devicePixelRatio || 1;
+    c.hidden = false; c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+    var colours = ['#c6f135', '#ff5fa0', '#f6f7f0', WHO === 'ben' ? '#c6f135' : '#ff5fa0'];
+    var bits = [];
+    for (var i = 0; i < 110; i++) {
+      bits.push({ x: innerWidth / 2 + (Math.random() - 0.5) * 80, y: innerHeight * 0.38, vx: (Math.random() - 0.5) * 9, vy: -Math.random() * 11 - 4,
+        w: 5 + Math.random() * 5, h: 8 + Math.random() * 6, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.3, col: colours[i % colours.length] });
+    }
+    var start = performance.now();
+    (function frame(t) {
+      var age = t - start;
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      bits.forEach(function (b) {
+        b.vy += 0.28; b.vx *= 0.99; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+        ctx.save(); ctx.globalAlpha = Math.max(0, 1 - age / 2600); ctx.translate(b.x, b.y); ctx.rotate(b.r);
+        ctx.fillStyle = b.col; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h * Math.abs(Math.cos(b.r * 2))); ctx.restore();
+      });
+      if (age < 2600) requestAnimationFrame(frame); else { ctx.clearRect(0, 0, innerWidth, innerHeight); c.hidden = true; }
+    })(start);
+  }
+
   // ---------- month picker ----------
   var MP = null;
   function closePicker() {
@@ -1162,7 +1261,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   $('tabAdd').onclick = function () { openSheet(null); };
   $('closeSheet').onclick = closeSheet;
   $('scrim').onclick = closeSheet;
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); if (e.key === 'Escape' && !$('sdPop').hidden) closeSalaryDay(true); });
 
   function renderCats() {
     if (GROUPS.indexOf(S.cat) < 0) S.cat = GROUPS[0];
