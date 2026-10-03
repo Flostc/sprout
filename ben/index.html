@@ -16,7 +16,10 @@
 <script>window.APP_API = "https://script.google.com/macros/s/AKfycbzwYaDzFlmSz_hXT0GY_MRVxE2TJle0gH0XgiinBz1Rh3412xcqkDvbuxKCirrOh36qVQ/exec";</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
-<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <style>
 /* Layout: phone app, one column, max 480px. Home and Dashboard screens swap above a floating tab bar; New spend is a bottom sheet.
    Dark only by design. Each person gets their own accent: Ben lime, Trinh pink. */
@@ -587,8 +590,13 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     });
   }
   function errText(e) { return e && e.message ? e.message : String(e); }
+  // Last data loaded, kept on this phone only so the app opens instantly. Lock this phone deletes it.
+  var DATA_KEY = 'bt-data-' + WHO;
+  function saveLocal(raw) { try { localStorage.setItem(DATA_KEY, JSON.stringify(raw)); } catch (e) {} }
+  function readLocal() { try { var s = localStorage.getItem(DATA_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function localToday() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function signedOut(msg) {
-    store(PIN_KEY, null); S.pin = ''; $('pin').value = '';
+    store(PIN_KEY, null); store(DATA_KEY, null); S.pin = ''; $('pin').value = '';
     $('app').hidden = true; $('tabbar').hidden = true; $('pinView').hidden = false;
     $('pinErr').textContent = msg || '';
   }
@@ -686,21 +694,27 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     }, function (e) { $('pinErr').textContent = errText(e); })
       .then(function () { $('pinGo').disabled = false; $('pinGo').textContent = 'Unlock'; });
   }
+  function showApp() { $('pinView').hidden = true; $('app').hidden = false; $('tabbar').hidden = false; }
+  function apply(raw) {
+    S.raw = raw; S.data = derive(raw);
+    if (!S.actKey) S.actKey = S.data.currentKey;
+    if (!S.setKey) S.setKey = S.data.currentKey;
+    render();
+  }
   function unlock() {
-    return load_().then(function () {
-      $('pinView').hidden = true; $('app').hidden = false; $('tabbar').hidden = false;
-    }, function (err) {
+    // Open straight away on the copy saved on this phone, then refresh from Google.
+    var cached = !S.raw && readLocal();
+    if (cached) { cached.today = localToday(); apply(cached); showApp(); }
+    return load_().then(showApp, function (err) {
       if (err && err.auth) signedOut(errText(err));
+      else if (S.raw) toast('Showing saved numbers. ' + errText(err), true);
       else { $('pinView').hidden = false; $('pinErr').textContent = errText(err); }
     });
   }
   function load_() {
     $('refresh').firstElementChild.classList.add('spin');
     return run('getData', [S.pin, WHO]).then(function (raw) {
-      S.raw = raw; S.data = derive(raw);
-      if (!S.actKey) S.actKey = S.data.currentKey;
-      if (!S.setKey) S.setKey = S.data.currentKey;
-      render();
+      apply(raw); saveLocal(raw);
     }).finally(function () { $('refresh').firstElementChild.classList.remove('spin'); });
   }
   function reload() { return load_().catch(function (err) { if (err && err.auth) signedOut(errText(err)); else toast(errText(err), true); }); }
