@@ -761,8 +761,9 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   function load_() {
     $('refresh').firstElementChild.classList.add('spin');
     return run('getData', [S.pin, WHO]).then(function (raw) {
+      if (S.pending) return;                            // a save is in flight; its own refresh follows
       apply(raw); saveLocal(raw); checkSalaryDay();
-    }).finally(function () { $('refresh').firstElementChild.classList.remove('spin'); });
+    }).finally(function () { if (!S.pending) $('refresh').firstElementChild.classList.remove('spin'); });
   }
   function reload() { return load_().catch(function (err) { if (err && err.auth) signedOut(errText(err)); else toast(errText(err), true); }); }
 
@@ -1288,24 +1289,54 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   $('eVND').onclick = function () { S.eCur = 'VND'; if (!S.editId) store(ECUR_KEY, 'VND'); renderConv(); };
   $('forMe').onclick = function () { S.forWho = WHO; renderCats(); renderConv(); };
   $('forPartner').onclick = function () { S.forWho = PARTNER; renderCats(); renderConv(); };
+  // Saves and deletes update the screen at once; Google confirms in the background.
+  S.pending = 0;
+  function startPending() { S.pending++; $('refresh').firstElementChild.classList.add('spin'); }
+  function endPending() {
+    S.pending = Math.max(0, S.pending - 1);
+    if (!S.pending) reload();                           // one refresh once every save has landed
+  }
+  function showSheetAgain() {
+    $('scrim').hidden = false; $('sheet').hidden = false;
+    setTimeout(function () { $('scrim').classList.add('open'); $('sheet').classList.add('open'); }, 30);
+  }
+  function saveFailed(err, restore, reopen) {
+    S.raw.spends = restore; apply(S.raw); saveLocal(S.raw);
+    if (err && err.auth) { signedOut(errText(err)); return; }
+    toast('Not saved: ' + errText(err), true);
+    if (reopen) { showSheetAgain(); $('formErr').textContent = errText(err) + ' Your entry is still here, tap Save to try again.'; }
+  }
   $('form').onsubmit = function (e) {
     e.preventDefault();
     var v = parseFloat(($('amount').value || '').replace(/,/g, ''));
     if (!(v > 0)) { $('formErr').textContent = 'Enter an amount above zero. Tick "Refund" for money back.'; $('amount').focus(); return; }
     if (!$('date').value) { $('formErr').textContent = 'Pick a date.'; return; }
-    $('formErr').textContent = ''; $('save').disabled = true; $('save').textContent = 'Saving...';
+    $('formErr').textContent = '';
     var spend = { id: S.editId, who: S.forWho, date: $('date').value, category: S.cat, item: $('item').value.trim(), amount: $('refund').checked ? -v : v, currency: S.eCur };
-    run('saveSpend', [S.pin, WHO, spend]).then(function (r) {
-      toast((S.editId ? 'Updated ' : 'Saved ') + (r.amount < 0 ? 'refund of ' + money(-r.amount, r.currency) : money(r.amount, r.currency)) + ' in ' + periodLabel(r.period));
-      closeSheet(); return reload();
-    }, function (err) { $('formErr').textContent = errText(err); })
-      .then(function () { $('save').disabled = false; $('save').textContent = 'Save'; });
+    // Work out what Google will store, so the screen can show it now.
+    var key = periodOf(spend.date, S.raw.cycleStartDay), rate = rateFor(key), home = CUR[spend.who];
+    var value = spend.currency === home ? spend.amount : home === 'MYR' ? spend.amount / rate : spend.amount * rate;
+    value = home === 'MYR' ? Math.round(value * 100) / 100 : Math.round(value);
+    var before = S.raw.spends.slice();
+    var old = spend.id ? before.filter(function (x) { return x[0] === spend.id; })[0] : null;
+    var row = [spend.id || 'tmp' + Date.now(), key, spend.date, spend.who, spend.category, old && old[4] === spend.category ? old[5] : '',
+      spend.item || spend.category.toLowerCase(), value, spend.currency === home ? null : spend.amount, spend.currency === home ? '' : spend.currency, old ? old[10] : WHO];
+    S.raw.spends = before.filter(function (x) { return x[0] !== spend.id; }).concat([row]);
+    if (!S.raw.months[key]) S.raw.months[key] = { rate: rate, ben: null, trinh: null };
+    apply(S.raw); closeSheet();
+    toast((spend.id ? 'Updated ' : 'Saved ') + (value < 0 ? 'refund of ' + money(-value, home) : money(value, home)) + ' in ' + periodLabel(key));
+    startPending();
+    run('saveSpend', [S.pin, WHO, spend]).then(function (r) { row[0] = r.id; saveLocal(S.raw); },
+      function (err) { saveFailed(err, before, true); }).then(endPending);
   };
   $('delBtn').onclick = function () {
     if (!S.confirmDel) { S.confirmDel = true; this.textContent = 'Tap again to delete'; return; }
-    var btn = this; btn.disabled = true;
-    run('deleteSpend', [S.pin, WHO, S.editId]).then(function () { toast('Deleted'); closeSheet(); return reload(); }, function (err) { $('formErr').textContent = errText(err); })
-      .then(function () { btn.disabled = false; });
+    var id = S.editId, before = S.raw.spends.slice();
+    S.raw.spends = before.filter(function (x) { return x[0] !== id; });
+    apply(S.raw); closeSheet(); toast('Deleted');
+    startPending();
+    run('deleteSpend', [S.pin, WHO, id]).then(function () { saveLocal(S.raw); },
+      function (err) { saveFailed(err, before, false); }).then(endPending);
   };
 
   // ---------- misc ----------
