@@ -229,6 +229,21 @@ img.avatar { object-fit: cover; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(-
 .chiprow .chip .n { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
 .chiprow .chip[aria-pressed="true"] .n { color: inherit; opacity: 0.8; }
 
+/* Privacy mode */
+.top .round + .round { margin-left: 8px; }
+#privacyBtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.sw-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.switch { flex: none; width: 52px; height: 32px; border-radius: 999px; border: 1px solid var(--line); background: var(--card-2); position: relative; padding: 0; }
+.switch i { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink-3); transition: transform .2s ease, background .2s ease; }
+.switch[aria-checked="true"] { background: var(--accent); border-color: transparent; }
+.switch[aria-checked="true"] i { transform: translateX(20px); background: var(--accent-ink); }
+body.privacy :is(#home, #act, #dash, #set) :is(.total, .big, .goal-big, .num, .tx .it, .tx .orig, .tx .amt, .tile .sub, .tile .note, #budLeft,
+  .cbar .v, .cbar .pc, .chart, .rates .v, .rates .bar, .pill, .panel .input, .act-total, .card .meter, #goal .meter) {
+  filter: blur(8px); user-select: none; -webkit-user-select: none; pointer-events: none;
+}
+body.privacy #home .tx, body.privacy #act .tx { pointer-events: none; }
+:is(.total, .big, .goal-big, .num, .tx .it, .tx .amt, .tile .sub, .chart, .pill) { transition: filter .2s ease; }
+
 /* Tab bar */
 .tabbar { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); transform: translateX(-50%); z-index: 20;
   display: flex; align-items: center; gap: 18px; padding: 8px 14px; border-radius: 999px;
@@ -338,6 +353,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     <img class="avatar" id="avatar" src="avatar.jpg" alt="Ben">
     <div class="hello"><small id="greet"></small><b id="hiName"></b></div>
     <div class="spacer"></div>
+    <button class="round" id="privacyBtn" aria-pressed="false" aria-label="Hide amounts"><i class="ph ph-eye i"></i></button>
     <button class="round" id="refresh" aria-label="Refresh"><i class="ph ph-arrows-clockwise i"></i></button>
   </header>
 
@@ -434,6 +450,13 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       </div>
     </div>
     <div class="warn" id="setWarn" hidden></div>
+
+    <section class="panel">
+      <div class="sw-row">
+        <div><h3>Privacy mode</h3><p class="muted" style="margin:4px 0 0">Blur amounts, item names and charts so you can show the app to others. Also on the eye button at the top.</p></div>
+        <button type="button" class="switch" id="privacySwitch" role="switch" aria-checked="false" aria-label="Privacy mode"><i></i></button>
+      </div>
+    </section>
 
     <section class="panel">
       <div class="period">
@@ -719,6 +742,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   document.addEventListener('input', function (e) { if (e.target.matches && e.target.matches('input[data-num]')) groupDigits(e.target); });
   function conv(v, from, rate) { if (from === S.disp || !rate) return v; return S.disp === 'MYR' ? v / rate : v * rate; }
   function toast(msg, bad) {
+    if (S.privacy) msg = String(msg).replace(/-?RM\s?[\d,.]+|-?[\d,.]+\s?₫|-?\d[\d,.]*%/g, '••••');
     var t = $('toast'); t.textContent = msg; t.className = 'toast show' + (bad ? ' bad' : '');
     clearTimeout(toast.t); toast.t = setTimeout(function () { t.className = 'toast' + (bad ? ' bad' : ''); }, 3000);
   }
@@ -1439,6 +1463,18 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   // ---------- misc ----------
   $('curToggle').onclick = function () { S.disp = S.disp === 'MYR' ? 'VND' : 'MYR'; store(CUR_KEY, S.disp); render(); };
   $('refresh').onclick = reload;
+  var PRIV_KEY = 'bt-privacy-' + WHO;
+  function setPrivacy(on) {
+    S.privacy = !!on; store(PRIV_KEY, on ? '1' : null);
+    document.body.classList.toggle('privacy', S.privacy);
+    $('privacyBtn').setAttribute('aria-pressed', String(S.privacy));
+    $('privacyBtn').setAttribute('aria-label', S.privacy ? 'Show amounts' : 'Hide amounts');
+    $('privacyBtn').firstElementChild.className = 'ph ' + (S.privacy ? 'ph-eye-slash' : 'ph-eye') + ' i';
+    $('privacySwitch').setAttribute('aria-checked', String(S.privacy));
+  }
+  $('privacyBtn').onclick = function () { setPrivacy(!S.privacy); };
+  $('privacySwitch').onclick = function () { setPrivacy(!S.privacy); };
+  setPrivacy(load(PRIV_KEY) === '1');
   $('catMonth').onclick = function () { closePicker(); S.catMode = 'month'; renderCatBreakdown(); };
   $('catYear').onclick = function () { closePicker(); S.catMode = 'year'; renderCatBreakdown(); };
   function stepCat(d) {
