@@ -551,7 +551,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
 
       <section class="panel">
         <div class="sec"><h3>2. Savings goal</h3><span class="num ok-text" id="pPctV"></span></div>
-        <input type="range" class="range" id="pPct" min="0" max="60" step="1" aria-label="Share of income to save">
+        <input type="range" class="range" id="pPct" min="0" max="80" step="1" aria-label="Share of income to save">
         <div class="goal-grid">
           <div><label for="pSaveAmt" class="muted">For the year</label><input class="input num slim" id="pSaveAmt" data-num inputmode="decimal" autocomplete="off" placeholder="0"></div>
           <div><span class="muted">Per month</span><span class="num" id="pSaveMon"></span></div>
@@ -598,9 +598,9 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
           <span class="muted" id="gMonHint"></span>
         </div>
         <div class="field"><div class="sec"><label for="gRate">Yearly return</label><span class="num" id="gRateV"></span></div>
-          <input type="range" class="range" id="gRate" min="0" max="12" step="0.5"></div>
+          <input type="range" class="range" id="gRate" min="0" max="25" step="0.5"></div>
         <div class="field"><div class="sec"><label for="gYrs">Years</label><span class="num" id="gYrsV"></span></div>
-          <input type="range" class="range" id="gYrs" min="1" max="40" step="1"></div>
+          <input type="range" class="range" id="gYrs" min="1" max="70" step="1"></div>
         <p class="muted" style="margin:0">An estimate. Real returns go up and down.</p>
       </section>
     </div>
@@ -620,9 +620,9 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
         <div class="who2" id="uWho"></div>
         <p class="muted" style="margin:0" id="uNote"></p>
         <div class="field"><div class="sec"><label for="uRate">Yearly return</label><span class="num" id="uRateV"></span></div>
-          <input type="range" class="range" id="uRate" min="0" max="12" step="0.5"></div>
+          <input type="range" class="range" id="uRate" min="0" max="25" step="0.5"></div>
         <div class="field"><div class="sec"><label for="uYrs">Years</label><span class="num" id="uYrsV"></span></div>
-          <input type="range" class="range" id="uYrs" min="1" max="40" step="1"></div>
+          <input type="range" class="range" id="uYrs" min="1" max="70" step="1"></div>
         <button type="button" class="cur-chip" id="uCur" style="justify-self:center"><span id="uCurL"></span><i class="ph ph-arrows-left-right"></i></button>
       </section>
     </div>
@@ -1969,7 +1969,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     $('pIncome').textContent = whole(inc, OWN);
     var pct = inc > 0 ? save / inc * 100 : 0;
     $('pPctV').textContent = Math.round(pct) + '%';
-    if (document.activeElement !== $('pPct')) $('pPct').value = Math.min(60, Math.round(pct));
+    if (document.activeElement !== $('pPct')) $('pPct').value = Math.min(80, Math.round(pct));
     $('pSaveMon').textContent = whole(save / 12, OWN);
     var sy = savedByYear(WHO)[cy], salY = S.data.months.reduce(function (t, m) { return t + (m.key.slice(0, 4) === String(cy) && m.key <= S.data.currentKey && m[WHO].salary != null ? m[WHO].salary : 0); }, 0);
     $('pSaveHint').textContent = sy != null ? cy + ' so far: saved ' + (salY > 0 ? Math.round(sy / salY * 100) + '% (' + whole(sy, OWN) + ').' : whole(sy, OWN) + '.') : '';
@@ -2052,7 +2052,9 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     for (var m = 1; m <= years * 12; m++) { bal = bal * (1 + r) + monthly; put += monthly; if (m % 12 === 0) out.push({ bal: bal, put: put }); }
     return out;
   }
-  function axisNum(v) { var u = v >= 1e9 ? [1e9, 'B'] : v >= 1e6 ? [1e6, 'M'] : v >= 1e3 ? [1e3, 'k'] : [1, '']; return (Math.round(v / u[0] * 10) / 10) + u[1]; }
+  // Big projections (long years, high returns) get a smaller font so they stay on one line.
+  function fitTotal(el, text) { el.textContent = text; el.style.fontSize = text.length > 19 ? '26px' : text.length > 15 ? '31px' : text.length > 12 ? '38px' : ''; }
+  function axisNum(v) { var u = v >= 1e12 ? [1e12, 'T'] : v >= 1e9 ? [1e9, 'B'] : v >= 1e6 ? [1e6, 'M'] : v >= 1e3 ? [1e3, 'k'] : [1, '']; return (Math.round(v / u[0] * 10) / 10) + u[1]; }
   // Stacked area chart: each band fills from the one below it (or zero) up to its own line.
   function drawGrowth(el, bands, y0, cur) {
     var W = 340, H = 180, L = 40, R = 12, T = 12, B = 22, n = bands[0].top.length - 1;
@@ -2085,7 +2087,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     if (document.activeElement !== $('gYrs')) $('gYrs').value = g.years;
     var pts = project(start, g.monthly, g.rate, g.years), last = pts[pts.length - 1];
     $('gYrsT').textContent = g.years + ' year' + (g.years === 1 ? '' : 's');
-    $('gTotal').textContent = whole(last.bal, OWN);
+    fitTotal($('gTotal'), whole(last.bal, OWN));
     $('gSplit').innerHTML = esc(whole(last.put, OWN)) + ' put in, <span class="ok-text">' + esc(whole(last.bal - last.put, OWN)) + '</span> from growth';
     setIn('gStart', Math.round(g.past));
     $('gYtdL').textContent = 'Saved ' + cy + ' so far';
@@ -2118,7 +2120,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     var n = US.years, b = people[0].pts.map(function (q) { return q.bal; }), t = people[1].pts.map(function (q) { return q.bal; });
     var tot = b.map(function (v, i) { return v + t[i]; });
     $('uYrsT').textContent = n + ' year' + (n === 1 ? '' : 's');
-    $('uTotal').textContent = whole(tot[n], US.cur);
+    fitTotal($('uTotal'), whole(tot[n], US.cur));
     $('uSplit').innerHTML = '<span style="color:' + PCOL.ben + '">Ben ' + esc(whole(b[n], US.cur)) + '</span> + <span style="color:' + PCOL.trinh + '">Trinh ' + esc(whole(t[n], US.cur)) + '</span>';
     $('uWho').innerHTML = people.map(function (p) {
       return '<div><b style="color:' + PCOL[p.w] + ';font-weight:600">' + NAMES[p.w] + '</b><span class="muted">Starting</span><span class="num">' + esc(whole(p.start, US.cur)) + '</span>' +
