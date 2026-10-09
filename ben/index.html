@@ -244,6 +244,80 @@ body.privacy :is(#home, #act, #dash, #set) :is(.total, .big, .goal-big, .num, .t
 body.privacy #home .tx, body.privacy #act .tx { pointer-events: none; }
 :is(.total, .big, .goal-big, .num, .tx .it, .tx .amt, .tile .sub, .chart, .pill) { transition: filter .2s ease; }
 
+/* Settings in the header, sync bar, pull to refresh */
+:root { --accent-dim: color-mix(in srgb, var(--accent) 45%, var(--card-2)); }
+body { overscroll-behavior-y: contain; }
+#setBtn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.back { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.syncbar { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 45; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity .2s ease; }
+.syncbar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; background: var(--accent); border-radius: 2px; animation: sync 1.1s ease-in-out infinite; }
+.syncbar.on { opacity: 1; }
+@keyframes sync { from { left: -40%; } to { left: 100%; } }
+.ptr { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 10px); z-index: 44; transform: translate(-50%, -60px); opacity: 0; pointer-events: none;
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--line); font-size: 13px; color: var(--ink-2);
+  transition: transform .25s cubic-bezier(0.16, 1, 0.3, 1), opacity .2s ease; }
+.ptr.drag { transition: none; }
+.ptr i { transition: transform .2s ease; }
+.ptr.ready { color: var(--accent); }
+.ptr.ready i { transform: rotate(180deg); }
+
+/* Extra sheets */
+.sheet-body { display: grid; gap: 14px; }
+.save.danger { background: var(--bad); color: #1e0602; }
+.btn2.sm { padding: 7px 11px; font-size: 13px; border-radius: 12px; }
+.chg { display: grid; gap: 2px; border-radius: 16px; overflow: hidden; }
+.chg > div { display: flex; justify-content: space-between; gap: 12px; padding: 11px 14px; background: var(--card); font-size: 14px; }
+.chg s { color: var(--ink-3); margin-right: 6px; }
+.chg .num { color: var(--accent); white-space: nowrap; }
+.chg .same { color: var(--ink-3); font-size: 13px; }
+
+/* Categories */
+.catrow { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px 36px; gap: 10px; align-items: center; }
+.catrow .ic { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.catrow b { display: block; font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catrow .muted { font-size: 12px; }
+.mini { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--card-2); color: var(--ink-2); display: grid; place-items: center; padding: 0; }
+.mini.del { color: var(--bad); }
+.addcat { border-style: dashed; }
+.icgrid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.icgrid button { aspect-ratio: 1; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2); font-size: 19px; display: grid; place-items: center; padding: 0; }
+.icgrid button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.opts { display: grid; gap: 8px; }
+.opt { display: flex; gap: 12px; text-align: left; align-items: flex-start; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.opt[aria-checked="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt[aria-checked="true"] > .i { color: var(--accent); }
+.opt b { display: block; font-weight: 500; font-size: 14px; }
+.opt .muted { font-size: 12px; }
+
+/* Plan */
+.pyear { font-weight: 600; font-size: 17px; }
+.big-n { font-size: 20px; }
+.input.slim { padding: 8px 10px; font-size: 15px; margin-top: 4px; }
+.range { width: 100%; accent-color: var(--accent); height: 28px; margin: 0; }
+.pbud { display: grid; grid-template-columns: 34px minmax(0, 1fr) minmax(0, 130px); gap: 2px 10px; align-items: center; }
+.pbud .ic { grid-row: span 2; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-size: 16px; }
+.pbud label { font-size: 14px; font-weight: 500; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pbud .hint-v { font-size: 11px; color: var(--ink-3); font-family: var(--font-mono); grid-column: 2; }
+.pbud .input { grid-column: 3; grid-row: 1 / span 2; padding: 9px 10px; font-family: var(--font-mono); text-align: right; }
+.stackbar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px; background: var(--card-2); }
+.stackbar i { display: block; min-width: 0; }
+.legend { display: grid; gap: 6px; font-size: 13px; }
+.legend > div { display: flex; justify-content: space-between; gap: 10px; }
+.legend span[style]::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 8px; background: var(--c); }
+.legend.two { grid-template-columns: 1fr 1fr; margin-top: 8px; color: var(--ink-2); }
+.legend .v { font-family: var(--font-mono); }
+.okbox { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--accent-soft); font-size: 14px; }
+.okbox .i { color: var(--accent); }
+.okbox.bad { background: rgba(255, 122, 107, 0.12); }
+.okbox.bad .i { color: var(--bad); }
+.who2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.who2 > div { border-radius: 16px; background: var(--card-2); padding: 12px; display: grid; gap: 2px; min-width: 0; }
+.who2 .num { overflow-wrap: anywhere; }
+body.privacy #plan :is(.total, .num, .input, .chart, .stackbar, .legend .v, .hint-v, #gSplit, #uSplit, #pSalHint, #pSaveHint, #gMonHint, #uNote) {
+  filter: blur(8px); user-select: none; -webkit-user-select: none; pointer-events: none;
+}
+body.privacy #set .catrow .muted { filter: blur(6px); }
+
 /* Tab bar */
 .tabbar { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); transform: translateX(-50%); z-index: 20;
   display: flex; align-items: center; gap: 18px; padding: 8px 14px; border-radius: 999px;
@@ -354,7 +428,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     <div class="hello"><small id="greet"></small><b id="hiName"></b></div>
     <div class="spacer"></div>
     <button class="round" id="privacyBtn" aria-pressed="false" aria-label="Hide amounts"><i class="ph ph-eye i"></i></button>
-    <button class="round" id="refresh" aria-label="Refresh"><i class="ph ph-arrows-clockwise i"></i></button>
+    <button class="round" id="setBtn" aria-pressed="false" aria-label="Settings"><i class="ph ph-gear-six i"></i></button>
   </header>
 
   <!-- Home -->
@@ -441,9 +515,122 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     </section>
   </main>
 
+  <!-- Plan -->
+  <main id="plan" class="stack" hidden>
+    <div class="sec"><h1 style="font-size:28px">Plan</h1>
+      <div class="seg sm" role="group" aria-label="Plan view">
+        <button type="button" id="pvB" aria-pressed="true">Budget</button>
+        <button type="button" id="pvG" aria-pressed="false">Grow</button>
+        <button type="button" id="pvU" aria-pressed="false">Us</button>
+      </div>
+    </div>
+
+    <div class="stack" id="planBudget">
+      <div class="together">
+        <div class="period">
+          <button type="button" class="round sm" id="planPrev" aria-label="Previous year"><i class="ph ph-caret-left"></i></button>
+          <span class="pyear" id="planYear"></span>
+          <button type="button" class="round sm" id="planNext" aria-label="Next year"><i class="ph ph-caret-right"></i></button>
+        </div>
+        <span class="muted" id="planStatus"></span>
+      </div>
+
+      <section class="panel">
+        <h3>1. Income</h3>
+        <div class="field">
+          <label for="pSal" id="pSalL">Monthly net salary</label>
+          <input class="input num" id="pSal" data-num inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="muted" id="pSalHint"></span>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="pBonus">Bonus for the year</label><input class="input num" id="pBonus" data-num inputmode="decimal" autocomplete="off" placeholder="0"></div>
+          <div class="field"><label for="pOther">Other income</label><input class="input num" id="pOther" data-num inputmode="decimal" autocomplete="off" placeholder="0"></div>
+        </div>
+        <div class="goal-grid"><div class="wide"><span class="muted" id="pIncomeL">Income for the year</span><span class="num big-n" id="pIncome"></span></div></div>
+      </section>
+
+      <section class="panel">
+        <div class="sec"><h3>2. Savings goal</h3><span class="num ok-text" id="pPctV"></span></div>
+        <input type="range" class="range" id="pPct" min="0" max="60" step="1" aria-label="Share of income to save">
+        <div class="goal-grid">
+          <div><label for="pSaveAmt" class="muted">For the year</label><input class="input num slim" id="pSaveAmt" data-num inputmode="decimal" autocomplete="off" placeholder="0"></div>
+          <div><span class="muted">Per month</span><span class="num" id="pSaveMon"></span></div>
+        </div>
+        <span class="muted" id="pSaveHint"></span>
+      </section>
+
+      <section class="panel">
+        <div class="sec"><h3>3. Monthly budgets</h3><button type="button" class="btn2 sm" id="pFill">Fill from last year</button></div>
+        <div class="stack tight" id="pBuds"></div>
+        <div class="sec total-row"><span class="muted">Budgets a month</span><span class="num" id="pBudTot"></span></div>
+      </section>
+
+      <section class="panel">
+        <h3>4. Does it add up?</h3>
+        <div class="stackbar" id="pBar"></div>
+        <div class="legend" id="pLegend"></div>
+        <div class="okbox" id="pOk"></div>
+      </section>
+
+      <button type="button" class="save" id="pApply"></button>
+      <p class="muted" id="pApplyNote" style="margin:-10px 0 0;text-align:center"></p>
+    </div>
+
+    <div class="stack" id="planGrow" hidden>
+      <section class="hero">
+        <div class="label">In <span id="gYrsT"></span> you could have</div>
+        <div class="total" id="gTotal"></div>
+        <div class="muted" id="gSplit"></div>
+      </section>
+      <section class="chart-card">
+        <div class="chart" id="gChart"></div>
+        <div class="legend two"><span style="--c:var(--accent)">With growth</span><span style="--c:var(--accent-dim)">Put in</span></div>
+      </section>
+      <section class="panel">
+        <h3>Starting from</h3>
+        <div class="goal-grid">
+          <div><span class="muted" id="gStartL">Starting amount</span><span class="num" id="gStart"></span></div>
+          <div><span class="muted" id="gYtdL"></span><span class="num" id="gYtd"></span></div>
+        </div>
+        <div class="field">
+          <label for="gMon" id="gMonL">Add each month</label>
+          <input class="input num" id="gMon" data-num inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="muted" id="gMonHint"></span>
+        </div>
+        <div class="field"><div class="sec"><label for="gRate">Yearly return</label><span class="num" id="gRateV"></span></div>
+          <input type="range" class="range" id="gRate" min="0" max="12" step="0.5"></div>
+        <div class="field"><div class="sec"><label for="gYrs">Years</label><span class="num" id="gYrsV"></span></div>
+          <input type="range" class="range" id="gYrs" min="1" max="40" step="1"></div>
+        <p class="muted" style="margin:0">An estimate. Real returns go up and down.</p>
+      </section>
+    </div>
+
+    <div class="stack" id="planUs" hidden>
+      <section class="hero">
+        <div class="label">Together in <span id="uYrsT"></span></div>
+        <div class="total" id="uTotal"></div>
+        <div class="muted" id="uSplit"></div>
+      </section>
+      <section class="chart-card">
+        <div class="chart" id="uChart"></div>
+        <div class="legend two"><span style="--c:#c6f135">Ben</span><span style="--c:#ff5fa0">Trinh</span></div>
+      </section>
+      <section class="panel">
+        <h3>Who brings what</h3>
+        <div class="who2" id="uWho"></div>
+        <p class="muted" style="margin:0" id="uNote"></p>
+        <div class="field"><div class="sec"><label for="uRate">Yearly return</label><span class="num" id="uRateV"></span></div>
+          <input type="range" class="range" id="uRate" min="0" max="12" step="0.5"></div>
+        <div class="field"><div class="sec"><label for="uYrs">Years</label><span class="num" id="uYrsV"></span></div>
+          <input type="range" class="range" id="uYrs" min="1" max="40" step="1"></div>
+        <button type="button" class="cur-chip" id="uCur" style="justify-self:center"><span id="uCurL"></span><i class="ph ph-arrows-left-right"></i></button>
+      </section>
+    </div>
+  </main>
+
   <!-- Settings -->
   <main id="set" class="stack" hidden>
-    <div class="sec"><h1 style="font-size:28px">Settings</h1>
+    <div class="sec"><div class="back"><button type="button" class="round sm" id="setBack" aria-label="Back"><i class="ph ph-caret-left"></i></button><h1 style="font-size:28px">Settings</h1></div>
       <div class="seg sm" role="group" aria-label="Whose settings">
         <button type="button" id="setMe" aria-pressed="true">Mine</button>
         <button type="button" id="setPartner" aria-pressed="false"></button>
@@ -477,20 +664,28 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     </section>
 
     <section class="panel">
-      <h3 id="budH">Monthly budgets</h3>
+      <div class="sec"><h3 id="budH">Monthly budgets</h3><div class="seg sm" id="budYears" role="group" aria-label="Budget year"></div></div>
+      <p class="muted" id="budNote" style="margin:-6px 0 0" hidden></p>
       <div class="stack tight" id="budInputs"></div>
       <div class="err" id="budErr" role="alert"></div>
       <button class="btn2 accent" id="saveBud" type="button">Save budgets</button>
     </section>
 
     <section class="panel">
-      <h3 id="goalSetH">Savings target</h3>
+      <div class="sec"><h3 id="goalSetH">Savings target</h3><div class="seg sm" id="goalYears" role="group" aria-label="Target year"></div></div>
       <div class="field">
         <label for="goalIn" id="goalLbl">Target for the year</label>
         <input class="input num" id="goalIn" data-num inputmode="decimal" autocomplete="off">
       </div>
       <div class="err" id="goalErr" role="alert"></div>
       <button class="btn2 accent" id="saveGoal" type="button">Save target</button>
+    </section>
+
+    <section class="panel">
+      <div class="sec"><h3>Categories</h3><span class="muted">Shared by both of you</span></div>
+      <div class="stack tight" id="catList"></div>
+      <p class="muted" id="catRemoved" style="margin:0" hidden></p>
+      <button class="btn2 addcat" id="catAdd" type="button"><i class="ph-bold ph-plus"></i>Add category</button>
     </section>
 
     <section class="panel">
@@ -535,7 +730,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   <button class="tab" id="tabAct" aria-label="Activity"><i class="ph ph-list-bullets i"></i></button>
   <button class="tab add" id="tabAdd" aria-label="New spend"><i class="ph-bold ph-plus i"></i></button>
   <button class="tab" id="tabDash" aria-label="Dashboard"><i class="ph ph-chart-line-up i"></i></button>
-  <button class="tab" id="tabSet" aria-label="Settings"><i class="ph ph-gear-six i"></i></button>
+  <button class="tab" id="tabPlan" aria-label="Plan"><i class="ph ph-target i"></i></button>
 </nav>
 
 <div class="scrim" id="scrim" hidden></div>
@@ -608,6 +803,49 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
 </div>
 <canvas id="sdConfetti" hidden></canvas>
 
+<div class="scrim" id="scrim2" hidden></div>
+<section class="sheet" id="apSheet" role="dialog" aria-modal="true" aria-labelledby="apH" hidden>
+  <div class="grab"></div>
+  <div class="sheet-body">
+    <div class="sec"><h2 id="apH"></h2><button type="button" class="round" data-close aria-label="Close"><i class="ph ph-x i"></i></button></div>
+    <p class="muted" style="margin:0">These go into Settings. Your monthly salaries are not touched.</p>
+    <div class="chg" id="apList"></div>
+    <div class="err" id="apErr" role="alert"></div>
+    <button type="button" class="save" id="apGo">Apply</button>
+  </div>
+</section>
+<section class="sheet" id="ctSheet" role="dialog" aria-modal="true" aria-labelledby="ctH" hidden>
+  <div class="grab"></div>
+  <div class="sheet-body">
+    <div class="sec"><h2 id="ctH">New category</h2><button type="button" class="round" data-close aria-label="Close"><i class="ph ph-x i"></i></button></div>
+    <div class="field"><label for="ctName">Name</label><input class="input" id="ctName" maxlength="30" autocomplete="off" placeholder="Coffee, pets, gym"></div>
+    <div class="field"><span class="lbl" id="ctIconL">Icon</span><div class="icgrid" id="ctIcons" role="group" aria-labelledby="ctIconL"></div></div>
+    <div class="row2" id="ctBuds">
+      <div class="field"><label for="ctBudMe" id="ctBudMeL"></label><input class="input num" id="ctBudMe" data-num inputmode="decimal" autocomplete="off" placeholder="0"></div>
+      <div class="field"><label for="ctBudPa" id="ctBudPaL"></label><input class="input num" id="ctBudPa" data-num inputmode="decimal" autocomplete="off" placeholder="0"></div>
+    </div>
+    <div class="err" id="ctErr" role="alert"></div>
+    <button type="button" class="save" id="ctSave">Add</button>
+  </div>
+</section>
+<section class="sheet" id="rmSheet" role="dialog" aria-modal="true" aria-labelledby="rmH" hidden>
+  <div class="grab"></div>
+  <div class="sheet-body">
+    <div class="sec"><h2 id="rmH"></h2><button type="button" class="round" data-close aria-label="Close"><i class="ph ph-x i"></i></button></div>
+    <p class="muted" style="margin:0" id="rmText"></p>
+    <div class="opts" id="rmOpts" role="radiogroup" aria-label="What happens to old spends">
+      <button type="button" class="opt" id="rmKeep" role="radio" aria-checked="true"><i class="ph ph-radio-button i"></i><div><b id="rmKeepB"></b><span class="muted" id="rmKeepT"></span></div></button>
+      <button type="button" class="opt" id="rmMove" role="radio" aria-checked="false"><i class="ph ph-circle i"></i><div><b>Move them to another category</b><span class="muted">Charts and totals change to match. Each spend keeps the old name as a label.</span></div></button>
+    </div>
+    <div class="chips" id="rmTo" hidden></div>
+    <div class="err" id="rmErr" role="alert"></div>
+    <button type="button" class="save danger" id="rmGo"></button>
+    <p class="muted" style="margin:-6px 0 0;text-align:center">You can add it back later with the same name.</p>
+  </div>
+</section>
+<div class="syncbar" id="syncbar" aria-hidden="true"></div>
+<div class="ptr" id="ptr" aria-hidden="true"><i class="ph ph-arrow-down"></i><span id="ptrText">Pull to refresh</span></div>
+
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -629,7 +867,9 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   var NAMES = { ben: 'Ben', trinh: 'Trinh' };
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  // Active categories (shown in New spend, budgets, the plan) and every category ever used. Replaced by the data sheet's list.
   var GROUPS = ['Food', 'Travel', 'Home & bills', 'Family & giving', 'Selfcare', 'Insurance', 'Overseas', 'Misc'];
+  var ALLCATS = GROUPS.slice();
   var ICON = { food: 'fork-knife', travel: 'car-profile', 'home & bills': 'house-line', 'family & giving': 'hand-heart', selfcare: 'sparkle',
     insurance: 'shield-check', overseas: 'airplane-tilt', misc: 'dots-three-outline' };
   function icon(cat) { return ICON[String(cat).toLowerCase()] || 'receipt'; }
@@ -655,7 +895,9 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   var ARGS = { login: ['pin', 'who'], logout: ['token', 'who'], changePin: ['token', 'who', 'oldPin', 'newPin'], getData: ['token', 'who'],
     saveSpend: ['token', 'who', 'spend'], deleteSpend: ['token', 'who', 'id'], saveMonth: ['token', 'who', 'month'],
     saveBudgets: ['token', 'who', 'forWho', 'map'], saveGoal: ['token', 'who', 'forWho', 'year', 'target'],
-    saveCycleDay: ['token', 'who', 'day'], exportSnapshot: ['token', 'who'] };
+    saveCycleDay: ['token', 'who', 'day'], exportSnapshot: ['token', 'who'],
+    saveBudgetsYear: ['token', 'who', 'forWho', 'map', 'year'], saveCategory: ['token', 'who', 'category'],
+    removeCategory: ['token', 'who', 'name', 'moveTo'], savePlan: ['token', 'who', 'year', 'plan'] };
   function AuthErr(msg) { this.message = msg; this.auth = true; }
   AuthErr.prototype.toString = function () { return this.message; };
   function run(fn, args) {
@@ -822,6 +1064,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   function showApp() { $('pinView').hidden = true; $('app').hidden = false; $('tabbar').hidden = false; }
   function apply(raw) {
     raw.today = localToday();
+    prepRaw(raw);
     S.raw = raw; S.data = derive(raw);
     if (!S.actKey) S.actKey = S.data.currentKey;
     if (!S.setKey) S.setKey = S.data.currentKey;
@@ -838,17 +1081,18 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     });
   }
   function load_() {
-    $('refresh').firstElementChild.classList.add('spin');
+    syncing(true);
     return run('getData', [S.pin, WHO]).then(function (raw) {
       if (S.pending) return;                            // a save is in flight; its own refresh follows
+      S.loadedAt = Date.now();
       apply(raw); saveLocal(raw); checkBirthday(); checkSalaryDay();
-    }).finally(function () { if (!S.pending) $('refresh').firstElementChild.classList.remove('spin'); });
+    }).finally(function () { if (!S.pending) syncing(false); });
   }
   function reload() { return load_().catch(function (err) { if (err && err.auth) signedOut(errText(err)); else toast(errText(err), true); }); }
 
   // ---------- render ----------
   function render() {
-    renderHome(); renderActivity(); renderDash(); renderSettings(); renderCats(); renderConv();
+    renderHome(); renderActivity(); renderDash(); renderSettings(); renderCatList(); renderCats(); renderConv(); renderPlan();
   }
 
   function renderHome() {
@@ -860,8 +1104,8 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     $('nudge').hidden = me.salary != null;
     $('nudgeText').textContent = 'Add your ' + monthName(m.key) + ' salary to see what is left to save';
 
-    var bud = S.data.budget[WHO] || {}, groups = me.groups;
-    var list = GROUPS.filter(function (g) { return bud[g] || groups[g]; });
+    var bud = budgetFor(WHO, m.key.slice(0, 4)), groups = me.groups;
+    var list = ALLCATS.filter(function (g) { return (GROUPS.indexOf(g) >= 0 && bud[g]) || groups[g]; });
     var totalBud = 0, totalSp = 0;
     $('tiles').innerHTML = list.map(function (g) {
       var b = bud[g] || 0, s = groups[g] || 0, over = b && s > b;
@@ -910,7 +1154,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     // Chips: All plus every category with spends this month (and any already picked).
     var monthRows = spendsFor(S.actWho, S.actKey), counts = {};
     monthRows.forEach(function (r) { counts[r[4]] = (counts[r[4]] || 0) + 1; });
-    var chipCats = GROUPS.filter(function (g) { return counts[g] || S.actCats.indexOf(g) >= 0; });
+    var chipCats = ALLCATS.filter(function (g) { return counts[g] || S.actCats.indexOf(g) >= 0; });
     $('actCats').innerHTML = '<button type="button" class="chip" data-f="all" aria-pressed="' + !S.actCats.length + '">All <span class="n">' + monthRows.length.toLocaleString('en-US') + '</span></button>' +
       chipCats.map(function (g) {
         return '<button type="button" class="chip" data-f="' + esc(g) + '" aria-pressed="' + (S.actCats.indexOf(g) >= 0) + '"><i class="ph ph-' + icon(g) + ' i"></i>' + esc(g) +
@@ -1083,13 +1327,17 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     if (document.activeElement !== $('salary')) $('salary').value = m[w] != null ? fmtNum(m[w]) : '';
     if (document.activeElement !== $('rate')) $('rate').value = fmtNum(m.rate || rateFor(S.setKey) || '');
     $('budH').textContent = NAMES[w] + "'s monthly budgets (" + cur + ')';
-    var bud = S.raw.budgets[w] || {};
+    if (!S.setYear) S.setYear = budgetYear();
+    var bud = budgetFor(w, S.setYear);
+    $('budYears').innerHTML = $('goalYears').innerHTML = yearSegHtml();
+    $('budNote').textContent = +S.setYear > budgetYear() ? 'These start on ' + yearStart(+S.setYear) + ', when the January ' + S.setYear + ' budget month begins.' : '';
+    $('budNote').hidden = !$('budNote').textContent;
     $('budInputs').innerHTML = GROUPS.map(function (g, i) {
       return '<div class="bud-row"><span class="ic"><i class="ph ph-' + icon(g) + '"></i></span><label for="bud' + i + '">' + esc(g) + '</label>' +
         '<input class="input" id="bud' + i + '" data-num data-g="' + esc(g) + '" inputmode="decimal" autocomplete="off" value="' + fmtNum(bud[g] || '') + '" placeholder="0"></div>';
     }).join('');
-    var year = S.data.currentKey.slice(0, 4);
-    $('goalSetH').textContent = NAMES[w] + "'s savings target for " + year;
+    var year = String(S.setYear);
+    $('goalSetH').textContent = NAMES[w] + "'s savings target";
     $('goalLbl').textContent = 'Target for the year (' + cur + ')';
     if (document.activeElement !== $('goalIn')) $('goalIn').value = S.raw.goals[year] && S.raw.goals[year][w] != null ? fmtNum(S.raw.goals[year][w]) : '';
     if (document.activeElement !== $('cycle')) $('cycle').value = S.raw.cycleStartDay;
@@ -1117,14 +1365,14 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     document.querySelectorAll('#budInputs input').forEach(function (inp) { var v = inp.value.replace(/[,\s]/g, ''); if (v !== '' && !(Number(v) >= 0)) bad = inp.dataset.g; map[inp.dataset.g] = v === '' ? 0 : Number(v); });
     if (bad) { $('budErr').textContent = 'Budget for ' + bad + ' must be zero or more.'; return; }
     $('budErr').textContent = ''; var btn = this; busy(btn, true, 'Save budgets');
-    run('saveBudgets', [S.pin, WHO, S.setWho, map]).then(function () { toast('Budgets saved'); return reload(); }, function (e) { $('budErr').textContent = errText(e); })
+    run('saveBudgetsYear', [S.pin, WHO, S.setWho, map, S.setYear]).then(function () { toast(S.setYear + ' budgets saved'); return reload(); }, function (e) { $('budErr').textContent = errText(e); })
       .then(function () { busy(btn, false, 'Save budgets'); });
   };
   $('saveGoal').onclick = function () {
     var v = numIn('goalIn');
     if (v === '' || !(v >= 0)) { $('goalErr').textContent = 'Enter a target of zero or more.'; return; }
     $('goalErr').textContent = ''; var btn = this; busy(btn, true, 'Save target');
-    run('saveGoal', [S.pin, WHO, S.setWho, S.data.currentKey.slice(0, 4), v]).then(function () { toast('Target saved'); return reload(); }, function (e) { $('goalErr').textContent = errText(e); })
+    run('saveGoal', [S.pin, WHO, S.setWho, S.setYear, v]).then(function () { toast(S.setYear + ' target saved'); return reload(); }, function (e) { $('goalErr').textContent = errText(e); })
       .then(function () { busy(btn, false, 'Save target'); });
   };
   $('saveCycle').onclick = function () {
@@ -1318,14 +1566,18 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   };
 
   // ---------- tabs ----------
-  var TABS = { home: 'tabHome', act: 'tabAct', dash: 'tabDash', set: 'tabSet' };
+  // Settings has no tab: the gear at the top opens it, and back returns to where you were.
+  var TABS = { home: 'tabHome', act: 'tabAct', dash: 'tabDash', plan: 'tabPlan', set: null };
   function showTab(t) {
     closePicker();
+    if (t === 'set' && S.tab !== 'set') S.prevTab = S.tab;
     S.tab = t;
-    Object.keys(TABS).forEach(function (k) { $(k).hidden = k !== t; $(TABS[k]).setAttribute('aria-current', k === t ? 'page' : 'false'); });
+    Object.keys(TABS).forEach(function (k) { $(k).hidden = k !== t; if (TABS[k]) $(TABS[k]).setAttribute('aria-current', k === t ? 'page' : 'false'); });
+    $('setBtn').setAttribute('aria-pressed', String(t === 'set'));
+    if (t === 'plan') renderPlan();
     window.scrollTo(0, 0);
   }
-  Object.keys(TABS).forEach(function (k) { $(TABS[k]).onclick = function () { if (k === 'act') { S.actCats = []; renderActivity(); } showTab(k); }; });
+  Object.keys(TABS).forEach(function (k) { if (!TABS[k]) return; $(TABS[k]).onclick = function () { if (k === 'act') { S.actCats = []; renderActivity(); } showTab(k); }; });
   // Tap a budget tile: that category's spends for the month.
   $('tiles').onclick = function (e) {
     var t = e.target.closest('[data-cat]'); if (!t) return;
@@ -1386,8 +1638,11 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); if (e.key === 'Escape' && !$('sdPop').hidden) closeSalaryDay(true); if (e.key === 'Escape' && !$('bdPop').hidden) closeBirthday(); });
 
   function renderCats() {
-    if (GROUPS.indexOf(S.cat) < 0) S.cat = GROUPS[0];
-    $('cats').innerHTML = GROUPS.map(function (c) { return '<button type="button" class="chip" data-c="' + esc(c) + '" aria-pressed="' + (c === S.cat) + '"><i class="ph ph-' + icon(c) + ' i"></i>' + esc(c) + '</button>'; }).join('');
+    // A spend in a removed category keeps it while being edited.
+    var list = GROUPS.slice();
+    if (S.editId && list.indexOf(S.cat) < 0 && ALLCATS.indexOf(S.cat) >= 0) list.push(S.cat);
+    if (list.indexOf(S.cat) < 0) S.cat = list[0];
+    $('cats').innerHTML = list.map(function (c) { return '<button type="button" class="chip" data-c="' + esc(c) + '" aria-pressed="' + (c === S.cat) + '"><i class="ph ph-' + icon(c) + ' i"></i>' + esc(c) + '</button>'; }).join('');
     var partner = S.forWho !== WHO;
     $('forMe').setAttribute('aria-pressed', !partner); $('forPartner').setAttribute('aria-pressed', partner);
     $('forWarn').hidden = !partner;
@@ -1412,7 +1667,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
   $('forPartner').onclick = function () { S.forWho = PARTNER; renderCats(); renderConv(); };
   // Saves and deletes update the screen at once; Google confirms in the background.
   S.pending = 0;
-  function startPending() { S.pending++; $('refresh').firstElementChild.classList.add('spin'); }
+  function startPending() { S.pending++; syncing(true); }
   function endPending() {
     S.pending = Math.max(0, S.pending - 1);
     if (!S.pending) reload();                           // one refresh once every save has landed
@@ -1460,9 +1715,464 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       function (err) { saveFailed(err, before, false); }).then(endPending);
   };
 
+  // ---------- categories, budgets by year, plan drafts kept on this phone ----------
+  var DRAFT_LOCAL = {};                                  // plan drafts changed on this phone since it opened
+  function prepRaw(raw) {
+    if (raw.catInfo && raw.catInfo.length) {
+      GROUPS = raw.catInfo.filter(function (c) { return c.active; }).map(function (c) { return c.name; });
+      ALLCATS = raw.catInfo.map(function (c) { return c.name; });
+      raw.catInfo.forEach(function (c) { ICON[c.name.toLowerCase()] = c.icon; });
+    }
+    raw.plans = raw.plans || { ben: {}, trinh: {} };
+    raw.plans[WHO] = raw.plans[WHO] || {};
+    Object.keys(DRAFT_LOCAL).forEach(function (k) { raw.plans[WHO][k] = DRAFT_LOCAL[k]; });
+  }
+  // A person's budget for a year, category by category: the latest set saved for that year or an
+  // earlier one, else the starting set. Same rule as the server.
+  function budgetFor(w, year) {
+    var byYear = (S.raw.budgetsByYear && S.raw.budgetsByYear[w]) || {}, base = (S.raw.budgets && S.raw.budgets[w]) || {};
+    var years = Object.keys(byYear).filter(function (y) { return +y <= +year; }).sort().reverse(), out = {};
+    ALLCATS.concat(Object.keys(base)).forEach(function (c) {
+      if (c in out) return;
+      for (var i = 0; i < years.length; i++) if (byYear[years[i]][c] !== undefined) { out[c] = byYear[years[i]][c]; return; }
+      out[c] = base[c] || 0;
+    });
+    return out;
+  }
+  function budgetYear() { return +S.data.currentKey.slice(0, 4); }
+  // First day of a year's first budget month: 22 Dec of the year before when months start on the 22nd.
+  function yearStart(y) { var d = S.raw.cycleStartDay || 1; return d > 1 ? d + ' Dec ' + (y - 1) : '1 Jan ' + y; }
+  function yearSegHtml() {
+    var cy = budgetYear(), ys = [cy, cy + 1];
+    if (ys.indexOf(+S.setYear) < 0) ys.push(+S.setYear);
+    return ys.sort().map(function (y) { return '<button type="button" data-y="' + y + '" aria-pressed="' + (y === +S.setYear) + '">' + y + '</button>'; }).join('');
+  }
+  $('budYears').onclick = $('goalYears').onclick = function (e) {
+    var b = e.target.closest('[data-y]'); if (!b) return;
+    S.setYear = +b.getAttribute('data-y'); $('budErr').textContent = $('goalErr').textContent = ''; renderSettings();
+  };
+
+  // ---------- extra sheets (apply, category, remove) ----------
+  var OPEN2 = null;
+  function openSheet2(id) {
+    if (OPEN2 && OPEN2 !== id) { $(OPEN2).classList.remove('open'); $(OPEN2).hidden = true; }
+    OPEN2 = id; $('scrim2').hidden = false; $(id).hidden = false;
+    requestAnimationFrame(function () { $('scrim2').classList.add('open'); $(id).classList.add('open'); });
+  }
+  function closeSheet2() {
+    if (!OPEN2) return;
+    var id = OPEN2; OPEN2 = null;
+    $('scrim2').classList.remove('open'); $(id).classList.remove('open');
+    setTimeout(function () { if (OPEN2 !== id) $(id).hidden = true; if (!OPEN2) $('scrim2').hidden = true; }, 320);
+  }
+  $('scrim2').onclick = closeSheet2;
+  document.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = closeSheet2; });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && OPEN2) closeSheet2(); });
+
+  // ---------- categories (Settings) ----------
+  var ICONS = ['fork-knife', 'car-profile', 'house-line', 'hand-heart', 'sparkle', 'shield-check', 'airplane-tilt', 'dots-three-outline',
+    'coffee', 'shopping-cart', 'gas-pump', 'bus', 'bicycle', 'barbell', 'heartbeat', 'first-aid', 'paw-print', 'baby', 'graduation-cap', 'book-open',
+    'game-controller', 'film-slate', 'music-notes', 'popcorn', 'wine', 'gift', 't-shirt', 'phone', 'wifi-high', 'plant', 'piggy-bank', 'receipt'];
+  function catInfo() { return S.raw.catInfo || GROUPS.map(function (g) { return { name: g, icon: icon(g), active: true }; }); }
+  function renderCatList() {
+    var counts = {};
+    S.raw.spends.forEach(function (s) { counts[s[4]] = (counts[s[4]] || 0) + 1; });
+    var info = catInfo(), removed = info.filter(function (c) { return !c.active; });
+    $('catList').innerHTML = info.filter(function (c) { return c.active; }).map(function (c) {
+      var n = counts[c.name] || 0;
+      return '<div class="catrow"><span class="ic"><i class="ph ph-' + esc(c.icon) + ' i"></i></span><div style="min-width:0"><b>' + esc(c.name) + '</b><span class="muted">' +
+        n.toLocaleString('en-US') + ' spend' + (n === 1 ? '' : 's') + '</span></div>' +
+        '<button type="button" class="mini" data-edit="' + esc(c.name) + '" aria-label="Rename ' + esc(c.name) + ' or change its icon"><i class="ph ph-pencil-simple"></i></button>' +
+        '<button type="button" class="mini del" data-del="' + esc(c.name) + '" aria-label="Remove ' + esc(c.name) + '"' + (GROUPS.length <= 1 ? ' disabled' : '') + '><i class="ph ph-trash"></i></button></div>';
+    }).join('');
+    $('catRemoved').hidden = !removed.length;
+    $('catRemoved').textContent = 'Removed: ' + removed.map(function (c) { return c.name; }).join(', ') + '. Add the same name to bring one back.';
+  }
+  $('catList').onclick = function (e) {
+    var b = e.target.closest('[data-edit],[data-del]'); if (!b) return;
+    if (b.hasAttribute('data-edit')) openCat(b.getAttribute('data-edit')); else openRemove(b.getAttribute('data-del'));
+  };
+  $('catAdd').onclick = function () { openCat(null); };
+
+  var CT = { old: null, icon: 'coffee' };
+  function openCat(name) {
+    var c = name ? catInfo().filter(function (x) { return x.name === name; })[0] : null;
+    CT.old = c ? c.name : null; CT.icon = c ? c.icon : 'coffee';
+    $('ctH').textContent = c ? 'Edit ' + c.name : 'New category';
+    $('ctName').value = c ? c.name : '';
+    $('ctBuds').hidden = !!c;
+    $('ctBudMeL').textContent = 'Your budget (' + OWN + ')';
+    $('ctBudPaL').textContent = PARTNER_NAME + "'s budget (" + CUR[PARTNER] + ')';
+    $('ctBudMe').value = $('ctBudPa').value = '';
+    $('ctErr').textContent = ''; $('ctSave').disabled = false; $('ctSave').textContent = c ? 'Save' : 'Add';
+    drawIcons(); openSheet2('ctSheet');
+    if (!c) setTimeout(function () { $('ctName').focus(); }, 300);
+  }
+  function drawIcons() {
+    var list = ICONS.indexOf(CT.icon) < 0 ? ICONS.concat([CT.icon]) : ICONS;
+    $('ctIcons').innerHTML = list.map(function (n) {
+      return '<button type="button" data-i="' + esc(n) + '" aria-pressed="' + (n === CT.icon) + '" aria-label="' + esc(n.replace(/-/g, ' ')) + '"><i class="ph ph-' + esc(n) + '"></i></button>';
+    }).join('');
+  }
+  $('ctIcons').onclick = function (e) { var b = e.target.closest('[data-i]'); if (b) { CT.icon = b.getAttribute('data-i'); drawIcons(); } };
+  $('ctName').oninput = function () { if (!CT.old) $('ctSave').textContent = 'Add' + (this.value.trim() ? ' ' + this.value.trim() : ''); };
+  $('ctSave').onclick = function () {
+    var name = $('ctName').value.trim().replace(/\s+/g, ' ');
+    if (!name) { $('ctErr').textContent = 'Give the category a name.'; return; }
+    var clash = catInfo().filter(function (x) { return x.active && x.name !== CT.old && x.name.toLowerCase() === name.toLowerCase(); })[0];
+    if (clash) { $('ctErr').textContent = 'There is already a category called ' + clash.name + '.'; return; }
+    var c = { name: name, icon: CT.icon };
+    if (CT.old) c.oldName = CT.old;
+    else { var b = {}; b[WHO] = numIn('ctBudMe') || 0; b[PARTNER] = numIn('ctBudPa') || 0; c.budgets = b; }
+    var btn = this, label = btn.textContent; btn.disabled = true; btn.textContent = 'Saving...'; $('ctErr').textContent = '';
+    run('saveCategory', [S.pin, WHO, c]).then(function (r) {
+      closeSheet2(); toast((CT.old ? 'Saved ' : 'Added ') + r.name); return reload();
+    }, function (e) { if (e && e.auth) { closeSheet2(); signedOut(errText(e)); return; } $('ctErr').textContent = errText(e); })
+      .then(function () { btn.disabled = false; btn.textContent = label; });
+  };
+
+  var RM = { name: null, move: false, to: null };
+  function openRemove(name) {
+    var n = S.raw.spends.filter(function (s) { return s[4] === name; }).length;
+    RM.name = name; RM.move = false; RM.to = null;
+    $('rmH').textContent = 'Remove ' + name + '?';
+    $('rmText').textContent = n ? n.toLocaleString('en-US') + ' past spend' + (n === 1 ? ' uses' : 's use') + ' it (both of you). What should happen to ' + (n === 1 ? 'it' : 'them') + '?'
+      : 'No spends use it. It disappears from New spend, budgets and the plan.';
+    $('rmKeepB').textContent = 'Keep ' + (n === 1 ? 'it' : 'them') + ' as ' + name;
+    $('rmKeepT').textContent = 'History and charts stay the same. ' + name + ' just stops showing in New spend and budgets.';
+    $('rmOpts').hidden = !n;
+    $('rmErr').textContent = ''; $('rmGo').disabled = false; $('rmGo').textContent = 'Remove ' + name;
+    drawRemove(); openSheet2('rmSheet');
+  }
+  function drawRemove() {
+    $('rmKeep').setAttribute('aria-checked', String(!RM.move)); $('rmMove').setAttribute('aria-checked', String(RM.move));
+    $('rmKeep').firstElementChild.className = 'ph ' + (RM.move ? 'ph-circle' : 'ph-radio-button') + ' i';
+    $('rmMove').firstElementChild.className = 'ph ' + (RM.move ? 'ph-radio-button' : 'ph-circle') + ' i';
+    $('rmTo').hidden = !RM.move;
+    $('rmTo').innerHTML = GROUPS.filter(function (g) { return g !== RM.name; }).map(function (g) {
+      return '<button type="button" class="chip" data-to="' + esc(g) + '" aria-pressed="' + (g === RM.to) + '"><i class="ph ph-' + icon(g) + ' i"></i>' + esc(g) + '</button>';
+    }).join('');
+  }
+  $('rmKeep').onclick = function () { RM.move = false; drawRemove(); };
+  $('rmMove').onclick = function () { RM.move = true; drawRemove(); };
+  $('rmTo').onclick = function (e) { var b = e.target.closest('[data-to]'); if (b) { RM.to = b.getAttribute('data-to'); $('rmErr').textContent = ''; drawRemove(); } };
+  $('rmGo').onclick = function () {
+    if (RM.move && !RM.to) { $('rmErr').textContent = 'Pick where the spends should go.'; return; }
+    var btn = this, name = RM.name; btn.disabled = true; btn.textContent = 'Removing...'; $('rmErr').textContent = '';
+    run('removeCategory', [S.pin, WHO, name, RM.move ? RM.to : '']).then(function () {
+      closeSheet2(); toast('Removed ' + name + (RM.move ? '. Its spends are now in ' + RM.to : '')); return reload();
+    }, function (e) { if (e && e.auth) { closeSheet2(); signedOut(errText(e)); return; } $('rmErr').textContent = errText(e); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Remove ' + name; });
+  };
+
+  // ---------- Plan: Budget, Grow, Us ----------
+  var PV = 'B';
+  function planDefaultYear() { var k = S.data.currentKey; return +k.slice(5, 7) >= 9 ? +k.slice(0, 4) + 1 : +k.slice(0, 4); }
+  function plansOf(w) { return (S.raw.plans && S.raw.plans[w]) || {}; }
+  function roundTo(v, cur) { var step = cur === 'VND' ? 10000 : 10; return Math.round(v / step) * step; }
+  function whole(v, cur) {
+    if (v == null || !isFinite(v)) return 'n/a';
+    return cur === 'VND' ? money(v, 'VND') : (v < 0 ? '-' : '') + 'RM ' + Math.round(Math.abs(v)).toLocaleString('en-US');
+  }
+  function avgSalary(w) {
+    var list = S.data.months.filter(function (m) { return m.key <= S.data.currentKey && m[w].salary != null; }).slice(-6);
+    return list.length ? list.reduce(function (t, m) { return t + m[w].salary; }, 0) / list.length : 0;
+  }
+  // Saved (net salary minus spending) per year, from every month with a salary.
+  function savedByYear(w) {
+    var out = {};
+    S.data.months.forEach(function (m) {
+      if (m.key > S.data.currentKey || m[w].salary == null) return;
+      var y = m.key.slice(0, 4); out[y] = (out[y] || 0) + m[w].salary - m[w].spent;
+    });
+    return out;
+  }
+  // Average spend per category a month over the last 12 finished budget months.
+  function avgSpend(w) {
+    var list = S.data.months.filter(function (m) { return m.key < S.data.currentKey; }).slice(-12), out = {};
+    list.forEach(function (m) { Object.keys(m[w].groups).forEach(function (g) { out[g] = (out[g] || 0) + m[w].groups[g]; }); });
+    Object.keys(out).forEach(function (g) { out[g] = Math.max(0, out[g] / list.length); });
+    return out;
+  }
+  function freshPlan(year) {
+    var sal = Math.round(avgSalary(WHO)), g = S.raw.goals[year] && S.raw.goals[year][WHO];
+    return { salary: sal, bonus: 0, other: 0, saveAmt: g != null ? g : roundTo(sal * 12 * 0.2, OWN), budgets: {} };
+  }
+  function loadPlan(year) {
+    var saved = plansOf(WHO)[year];
+    S.plan = saved ? JSON.parse(JSON.stringify(saved)) : freshPlan(year);
+    S.plan.budgets = S.plan.budgets || {};
+    S.planYear = year; S.planSaved = !!saved; S.planStatus = null;
+  }
+  function planIncome(p) { return (+p.salary || 0) * 12 + (+p.bonus || 0) + (+p.other || 0); }
+  function planBudTotal(p) { return GROUPS.reduce(function (t, c) { return t + (+p.budgets[c] || 0); }, 0); }
+
+  var DRAFT_T = {};
+  // Plan drafts save to the data sheet a moment after the last change, so both phones see them.
+  function saveDraft(key, obj) {
+    var copy = JSON.parse(JSON.stringify(obj));
+    DRAFT_LOCAL[key] = copy; S.raw.plans[WHO][key] = copy; saveLocal(S.raw);
+    if (key !== 'grow') { S.planStatus = 'Saving draft...'; $('planStatus').textContent = S.planStatus; }
+    clearTimeout(DRAFT_T[key]);
+    DRAFT_T[key] = setTimeout(function () {
+      run('savePlan', [S.pin, WHO, key, copy]).then(function () {
+        if (key !== 'grow' && DRAFT_LOCAL[key] === copy) { S.planStatus = null; if (S.planYear + '' === key) $('planStatus').textContent = planStatusText(); }
+      }, function (e) {
+        if (e && e.auth) { signedOut(errText(e)); return; }
+        if (key !== 'grow') { S.planStatus = 'Draft not saved: ' + errText(e); $('planStatus').textContent = S.planStatus; } else toast('Not saved: ' + errText(e), true);
+      });
+    }, 1200);
+  }
+  function planStatusText() {
+    return S.planStatus || (S.planSaved ? 'Draft saved. ' + PARTNER_NAME + ' can see it too. Nothing changes until you tap Apply.'
+      : 'A starting draft from your recent months. Nothing changes until you tap Apply.');
+  }
+  function setIn(id, v) { if (document.activeElement !== $(id)) $(id).value = v ? fmtNum(v) : ''; }
+
+  function renderPlan() {
+    if (!S.data) return;
+    ['B', 'G', 'U'].forEach(function (k) { $('pv' + k).setAttribute('aria-pressed', String(PV === k)); });
+    $('planBudget').hidden = PV !== 'B'; $('planGrow').hidden = PV !== 'G'; $('planUs').hidden = PV !== 'U';
+    if (S.tab !== 'plan') return;
+    if (PV === 'B') renderPlanBudget(); else if (PV === 'G') renderGrow(); else renderUs();
+  }
+  function renderPlanBudget() {
+    var cy = budgetYear();
+    if (S.planYear == null || !S.plan) loadPlan(S.planYear || planDefaultYear());
+    var p = S.plan, y = S.planYear, now = budgetFor(WHO, y);
+    GROUPS.forEach(function (c) { if (p.budgets[c] == null) p.budgets[c] = now[c] || 0; });
+    $('planYear').textContent = 'Plan for ' + y;
+    $('planPrev').disabled = y <= cy; $('planNext').disabled = y >= cy + 2;
+    $('planStatus').textContent = planStatusText();
+    $('pSalL').textContent = 'Monthly net salary (' + OWN + ')';
+    setIn('pSal', p.salary); setIn('pBonus', p.bonus); setIn('pOther', p.other); setIn('pSaveAmt', p.saveAmt);
+    var avg = avgSalary(WHO);
+    $('pSalHint').textContent = avg ? 'Your average for the last 6 months: ' + whole(avg, OWN) : 'Add salaries in Settings to see your average here.';
+    var sig = y + '|' + GROUPS.join('|');
+    if ($('pBuds').getAttribute('data-sig') !== sig) {
+      var avgS = avgSpend(WHO);
+      $('pBuds').innerHTML = GROUPS.map(function (c, i) {
+        return '<div class="pbud"><span class="ic"><i class="ph ph-' + icon(c) + '"></i></span><label for="pb' + i + '">' + esc(c) + '</label>' +
+          '<input class="input" id="pb' + i + '" data-num data-pb="' + esc(c) + '" inputmode="decimal" autocomplete="off" placeholder="0">' +
+          '<span class="hint-v">avg ' + fmtNum(Math.round(avgS[c] || 0)) + ' a month</span></div>';
+      }).join('');
+      $('pBuds').setAttribute('data-sig', sig);
+    }
+    $('pBuds').querySelectorAll('[data-pb]').forEach(function (inp) {
+      if (document.activeElement !== inp) inp.value = fmtNum(p.budgets[inp.getAttribute('data-pb')] || '');
+    });
+    planTotals();
+  }
+  function planTotals() {
+    var p = S.plan, y = S.planYear, cy = budgetYear(), inc = planIncome(p), save = +p.saveAmt || 0, budM = planBudTotal(p), bud = budM * 12, spare = inc - save - bud;
+    $('pIncomeL').textContent = 'Income for ' + y;
+    $('pIncome').textContent = whole(inc, OWN);
+    var pct = inc > 0 ? save / inc * 100 : 0;
+    $('pPctV').textContent = Math.round(pct) + '%';
+    if (document.activeElement !== $('pPct')) $('pPct').value = Math.min(60, Math.round(pct));
+    $('pSaveMon').textContent = whole(save / 12, OWN);
+    var sy = savedByYear(WHO)[cy], salY = S.data.months.reduce(function (t, m) { return t + (m.key.slice(0, 4) === String(cy) && m.key <= S.data.currentKey && m[WHO].salary != null ? m[WHO].salary : 0); }, 0);
+    $('pSaveHint').textContent = sy != null ? cy + ' so far: saved ' + (salY > 0 ? Math.round(sy / salY * 100) + '% (' + whole(sy, OWN) + ').' : whole(sy, OWN) + '.') : '';
+    $('pBudTot').textContent = whole(budM, OWN);
+    var parts = [[save, 'var(--accent)', 'Savings'], [bud, 'var(--accent-dim)', 'Budgets x 12'],
+      spare >= 0 ? [spare, 'color-mix(in srgb, var(--ink-3) 40%, transparent)', 'Spare'] : [-spare, 'var(--bad)', 'Over by']];
+    var sum = parts.reduce(function (t, x) { return t + Math.max(0, x[0]); }, 0) || 1;
+    $('pBar').innerHTML = parts.map(function (x) { return x[0] > 0 ? '<i style="flex:' + (x[0] / sum).toFixed(4) + ';background:' + x[1] + '"></i>' : ''; }).join('');
+    $('pLegend').innerHTML = parts.map(function (x) { return '<div><span style="--c:' + x[1] + '">' + x[2] + '</span><span class="v">' + whole(x[0], OWN) + '</span></div>'; }).join('');
+    var ok = spare >= 0;
+    $('pOk').className = 'okbox' + (ok || inc <= 0 ? '' : ' bad');
+    $('pOk').innerHTML = '<i class="ph ' + (ok ? 'ph-check-circle' : 'ph-warning-circle') + ' i"></i><span>' +
+      (inc <= 0 ? 'Add your income to check the plan.' : ok ? 'Balanced, with ' + whole(spare / 12, OWN) + ' a month spare.' : 'Over by ' + whole(-spare / 12, OWN) + ' a month. Trim the budgets or the savings goal.') + '</span>';
+    $('pApply').innerHTML = '<i class="ph-bold ph-check"></i> Apply to ' + y;
+    $('pApplyNote').textContent = 'Saves your ' + y + ' savings target and ' + y + ' budgets into Settings. ' +
+      (y > cy ? 'They start on ' + yearStart(y) + ', when the January budget month begins. ' + cy + ' keeps its own.' : 'The budgets count from this month on.');
+  }
+  function planChanged() { S.planSaved = true; planTotals(); saveDraft(String(S.planYear), S.plan); }
+  ['pSal', 'pBonus', 'pOther'].forEach(function (id) {
+    $(id).addEventListener('input', function () { S.plan[{ pSal: 'salary', pBonus: 'bonus', pOther: 'other' }[id]] = numIn(id) || 0; planChanged(); });
+  });
+  $('pSaveAmt').addEventListener('input', function () { S.plan.saveAmt = numIn('pSaveAmt') || 0; planChanged(); });
+  $('pPct').addEventListener('input', function () { S.plan.saveAmt = roundTo(planIncome(S.plan) * this.value / 100, OWN); $('pSaveAmt').value = fmtNum(S.plan.saveAmt); planChanged(); });
+  $('pBuds').addEventListener('input', function (e) {
+    var c = e.target.getAttribute('data-pb'); if (c == null) return;
+    S.plan.budgets[c] = numIn(e.target.id) || 0; planChanged();
+  });
+  $('pFill').onclick = function () {
+    var avg = avgSpend(WHO);
+    GROUPS.forEach(function (c) { S.plan.budgets[c] = roundTo(avg[c] || 0, OWN); });
+    renderPlanBudget(); planChanged(); toast('Filled from your average over the last 12 months');
+  };
+  function planStep(d) { loadPlan(S.planYear + d); renderPlanBudget(); }
+  $('planPrev').onclick = function () { planStep(-1); };
+  $('planNext').onclick = function () { planStep(1); };
+  $('pApply').onclick = function () {
+    var p = S.plan, y = S.planYear, cur = budgetFor(WHO, y), g = S.raw.goals[y] && S.raw.goals[y][WHO];
+    var fmt = function (v) { return fmtNum(OWN === 'VND' ? Math.round(v) : Math.round(v * 100) / 100); };
+    var rows = [], same = [];
+    if (g == null || Math.abs(g - (+p.saveAmt || 0)) > 0.004) rows.push(['Savings target ' + y, g == null ? 'not set' : fmt(g), fmt(+p.saveAmt || 0)]); else same.push('Savings target');
+    GROUPS.forEach(function (c) {
+      var a = cur[c] || 0, b = +p.budgets[c] || 0;
+      if (Math.abs(a - b) > 0.004) rows.push([c, fmt(a), fmt(b)]); else same.push(c);
+    });
+    $('apH').textContent = 'Apply to ' + y + '?';
+    $('apList').innerHTML = rows.map(function (r) { return '<div><span>' + esc(r[0]) + '</span><span class="num"><s>' + r[1] + '</s>' + r[2] + '</span></div>'; }).join('') +
+      (same.length ? '<div class="same"><span>' + esc(same.join(', ')) + '</span><span>no change</span></div>' : '');
+    $('apErr').textContent = rows.length ? '' : 'Settings already match this plan.';
+    $('apGo').disabled = !rows.length; $('apGo').textContent = 'Apply';
+    openSheet2('apSheet');
+  };
+  $('apGo').onclick = function () {
+    var p = S.plan, y = S.planYear, map = {}, btn = this;
+    GROUPS.forEach(function (c) { map[c] = +p.budgets[c] || 0; });
+    btn.disabled = true; btn.textContent = 'Applying...'; $('apErr').textContent = '';
+    run('saveGoal', [S.pin, WHO, WHO, y, +p.saveAmt || 0]).then(function () { return run('saveBudgetsYear', [S.pin, WHO, WHO, map, y]); })
+      .then(function () { closeSheet2(); S.setYear = y; S.setWho = WHO; toast('Applied to ' + y + '. You can see it in Settings.'); return reload(); },
+        function (e) { if (e && e.auth) { closeSheet2(); signedOut(errText(e)); return; } $('apErr').textContent = errText(e); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Apply'; });
+  };
+
+  // Grow: what saving each month could turn into. Starts from every full year's savings plus this year's so far.
+  function planMonthly(w) {
+    var py = planDefaultYear(), p = plansOf(w)[py];
+    if (p && +p.saveAmt) return { v: p.saveAmt / 12, from: 'plan', year: py };
+    var list = S.data.months.filter(function (m) { return m.key < S.data.currentKey && m[w].salary != null; }).slice(-12);
+    var avg = list.length ? list.reduce(function (t, m) { return t + m[w].salary - m[w].spent; }, 0) / list.length : 0;
+    return { v: Math.max(0, avg), from: 'avg' };
+  }
+  function growFor(w) {
+    var by = savedByYear(w), cy = String(budgetYear()), past = 0;
+    Object.keys(by).forEach(function (y) { if (y < cy) past += by[y]; });
+    var gp = plansOf(w).grow || {}, pm = planMonthly(w);
+    return { past: past, ytd: by[cy] || 0, monthly: gp.monthly != null ? +gp.monthly : pm.v, typed: gp.monthly != null, pm: pm,
+      rate: gp.rate != null ? +gp.rate : 5, years: gp.years != null ? +gp.years : 10 };
+  }
+  // Month by month with the return compounded monthly; one point per year.
+  function project(start, monthly, rate, years) {
+    var r = rate / 100 / 12, bal = start, put = start, out = [{ bal: bal, put: put }];
+    for (var m = 1; m <= years * 12; m++) { bal = bal * (1 + r) + monthly; put += monthly; if (m % 12 === 0) out.push({ bal: bal, put: put }); }
+    return out;
+  }
+  function axisNum(v) { var u = v >= 1e9 ? [1e9, 'B'] : v >= 1e6 ? [1e6, 'M'] : v >= 1e3 ? [1e3, 'k'] : [1, '']; return (Math.round(v / u[0] * 10) / 10) + u[1]; }
+  // Stacked area chart: each band fills from the one below it (or zero) up to its own line.
+  function drawGrowth(el, bands, y0, cur) {
+    var W = 340, H = 180, L = 40, R = 12, T = 12, B = 22, n = bands[0].top.length - 1;
+    var max = Math.max.apply(null, bands[bands.length - 1].top.concat([1]));
+    var p = Math.pow(10, Math.floor(Math.log10(max))), k = max / p; max = (k <= 1 ? 1 : k <= 2 ? 2 : k <= 5 ? 5 : 10) * p;
+    var x = function (i) { return L + (W - L - R) * (n ? i / n : 0.5); };
+    var y = function (v) { return T + (H - T - B) * (1 - Math.max(0, v) / max); };
+    var line = function (a) { return a.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(''); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Projected savings">';
+    for (var g = 0; g <= 4; g++) {
+      var v = max * g / 4;
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" style="stroke:var(--line)"/><text x="' + (L - 6) + '" y="' + (y(v) + 3) + '" text-anchor="end">' + axisNum(v) + '</text>';
+    }
+    bands.forEach(function (b, bi) {
+      var below = bi ? bands[bi - 1].top : b.top.map(function () { return 0; });
+      var back = below.map(function (v, i) { return 'L' + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).reverse().join('');
+      s += '<path d="' + line(b.top) + back + 'Z" style="fill:' + b.color + ';fill-opacity:' + (b.alpha || 0.3) + '"/>';
+    });
+    bands.forEach(function (b) { s += '<path d="' + line(b.top) + '" style="fill:none;stroke:' + b.color + ';stroke-width:' + (b.w || 2) + ';stroke-linejoin:round"/>'; });
+    var top = bands[bands.length - 1];
+    s += '<circle cx="' + x(n) + '" cy="' + y(top.top[n]) + '" r="4.5" style="fill:' + top.color + ';stroke:var(--bg);stroke-width:2"/>';
+    var step = n <= 6 ? 1 : n <= 12 ? 2 : n <= 25 ? 5 : 10;
+    for (var t = 0; t <= n; t += step) s += '<text x="' + x(t) + '" y="' + (H - 5) + '" text-anchor="middle">' + (y0 + t) + '</text>';
+    el.innerHTML = s + '</svg>';
+  }
+  function renderGrow() {
+    var g = growFor(WHO), cy = budgetYear(), start = g.past + g.ytd;
+    setIn('gMon', OWN === 'VND' ? Math.round(g.monthly) : Math.round(g.monthly));
+    if (document.activeElement !== $('gRate')) $('gRate').value = g.rate;
+    if (document.activeElement !== $('gYrs')) $('gYrs').value = g.years;
+    var pts = project(start, g.monthly, g.rate, g.years), last = pts[pts.length - 1];
+    $('gYrsT').textContent = g.years + ' year' + (g.years === 1 ? '' : 's');
+    $('gTotal').textContent = whole(last.bal, OWN);
+    $('gSplit').innerHTML = esc(whole(last.put, OWN)) + ' put in, <span class="ok-text">' + esc(whole(last.bal - last.put, OWN)) + '</span> from growth';
+    $('gStart').textContent = whole(g.past, OWN);
+    $('gYtdL').textContent = 'Saved ' + cy + ' so far';
+    $('gYtd').textContent = whole(g.ytd, OWN);
+    $('gMonL').textContent = 'Add each month (' + OWN + ')';
+    $('gMonHint').innerHTML = g.typed ? 'Your own figure. <button type="button" class="linkish" id="gReset" style="padding:0 2px">Use ' + (g.pm.from === 'plan' ? 'your ' + g.pm.year + ' plan' : 'your average') + '</button>'
+      : g.pm.from === 'plan' ? 'From your ' + g.pm.year + ' plan. Type to try other amounts.' : 'Your average over the last 12 months. Type to try other amounts.';
+    $('gRateV').textContent = g.rate.toFixed(1) + '%'; $('gYrsV').textContent = g.years;
+    drawGrowth($('gChart'), [{ top: pts.map(function (q) { return q.put; }), color: 'var(--accent-dim)', alpha: 0.55 },
+      { top: pts.map(function (q) { return q.bal; }), color: 'var(--accent)', w: 2.5 }], cy, OWN);
+  }
+  function growSave(patch) { saveDraft('grow', Object.assign({}, plansOf(WHO).grow || {}, patch)); renderGrow(); }
+  $('gMon').addEventListener('input', function () { var v = numIn('gMon'); growSave({ monthly: v === '' ? null : v }); });
+  $('gRate').addEventListener('input', function () { growSave({ rate: +this.value }); });
+  $('gYrs').addEventListener('input', function () { growSave({ years: +this.value }); });
+  $('gMonHint').onclick = function (e) { if (e.target.id === 'gReset') { $('gMon').blur(); growSave({ monthly: null }); } };
+
+  // Us: both projections together, in one currency at the latest exchange rate.
+  var US = { rate: 5, years: 10, cur: OWN };
+  try { var usSaved = JSON.parse(load('bt-us-' + WHO) || 'null'); if (usSaved) { US.rate = +usSaved.rate || 5; US.years = +usSaved.years || 10; if (usSaved.cur === 'MYR' || usSaved.cur === 'VND') US.cur = usSaved.cur; } } catch (e) {}
+  var PCOL = { ben: '#c6f135', trinh: '#ff5fa0' };
+  function renderUs() {
+    var rate = latestRate() || 1;
+    var toCur = function (v, from) { return from === US.cur ? v : US.cur === 'MYR' ? v / rate : v * rate; };
+    var people = ['ben', 'trinh'].map(function (w) {
+      var g = growFor(w), own = g.past + g.ytd, start = toCur(own, CUR[w]), mon = toCur(g.monthly, CUR[w]);
+      return { w: w, start: start, mon: mon, ownStart: own, ownMon: g.monthly, pts: project(start, mon, US.rate, US.years) };
+    });
+    var n = US.years, b = people[0].pts.map(function (q) { return q.bal; }), t = people[1].pts.map(function (q) { return q.bal; });
+    var tot = b.map(function (v, i) { return v + t[i]; });
+    $('uYrsT').textContent = n + ' year' + (n === 1 ? '' : 's');
+    $('uTotal').textContent = whole(tot[n], US.cur);
+    $('uSplit').innerHTML = '<span style="color:' + PCOL.ben + '">Ben ' + esc(whole(b[n], US.cur)) + '</span> + <span style="color:' + PCOL.trinh + '">Trinh ' + esc(whole(t[n], US.cur)) + '</span>';
+    $('uWho').innerHTML = people.map(function (p) {
+      return '<div><b style="color:' + PCOL[p.w] + ';font-weight:600">' + NAMES[p.w] + '</b><span class="muted">Starting</span><span class="num">' + esc(whole(p.start, US.cur)) + '</span>' +
+        '<span class="muted">Each month</span><span class="num">' + esc(whole(p.mon, US.cur)) + '</span></div>';
+    }).join('');
+    var other = people.filter(function (p) { return CUR[p.w] !== US.cur; })[0];
+    $('uNote').textContent = 'Taken from each Grow page.' + (other ? ' ' + NAMES[other.w] + ': ' + whole(other.ownStart, CUR[other.w]) + ' starting and ' +
+      whole(other.ownMon, CUR[other.w]) + ' a month, at RM 1 = ' + rate.toLocaleString('en-US') + ' ₫ from Settings.' : '');
+    if (document.activeElement !== $('uRate')) $('uRate').value = US.rate;
+    if (document.activeElement !== $('uYrs')) $('uYrs').value = US.years;
+    $('uRateV').textContent = US.rate.toFixed(1) + '%'; $('uYrsV').textContent = US.years;
+    $('uCurL').textContent = 'Show in ' + (US.cur === 'MYR' ? '₫' : 'RM');
+    drawGrowth($('uChart'), [{ top: b, color: PCOL.ben }, { top: tot, color: PCOL.trinh, w: 2.5 }], budgetYear(), US.cur);
+  }
+  function usSave() { store('bt-us-' + WHO, JSON.stringify(US)); renderUs(); }
+  $('uRate').addEventListener('input', function () { US.rate = +this.value; usSave(); });
+  $('uYrs').addEventListener('input', function () { US.years = +this.value; usSave(); });
+  $('uCur').onclick = function () { US.cur = US.cur === 'MYR' ? 'VND' : 'MYR'; usSave(); };
+  $('pvB').onclick = function () { PV = 'B'; renderPlan(); };
+  $('pvG').onclick = function () { PV = 'G'; renderPlan(); };
+  $('pvU').onclick = function () { PV = 'U'; renderPlan(); };
+
+  // ---------- Settings button, refreshing ----------
+  function syncing(on) { $('syncbar').classList.toggle('on', !!on); }
+  function goBack() { showTab(S.prevTab || 'home'); }
+  $('setBtn').onclick = function () { if (S.tab === 'set') goBack(); else showTab('set'); };
+  $('setBack').onclick = goBack;
+  // Back in the app after a while: fetch the latest, so the other phone's entries show up.
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && S.raw && S.pin && !S.pending && Date.now() - (S.loadedAt || 0) > 30000) reload();
+  });
+  // Pull down on Home to refresh.
+  var PTR = { y0: null, d: 0 };
+  window.addEventListener('touchstart', function (e) {
+    PTR.y0 = S.tab === 'home' && S.raw && window.scrollY <= 0 && $('sheet').hidden && !OPEN2 && e.touches.length === 1 ? e.touches[0].clientY : null;
+    PTR.d = 0;
+  }, { passive: true });
+  window.addEventListener('touchmove', function (e) {
+    if (PTR.y0 == null) return;
+    PTR.d = window.scrollY > 0 ? 0 : Math.max(0, e.touches[0].clientY - PTR.y0);
+    var el = $('ptr'), ready = PTR.d >= 80;
+    el.classList.add('drag'); el.classList.toggle('ready', ready);
+    el.style.transform = 'translate(-50%,' + (Math.min(PTR.d, 120) * 0.6 - 60) + 'px)';
+    el.style.opacity = Math.min(1, PTR.d / 60);
+    $('ptrText').textContent = ready ? 'Release to refresh' : 'Pull to refresh';
+  }, { passive: true });
+  window.addEventListener('touchend', function () {
+    if (PTR.y0 == null) return;
+    var go = PTR.d >= 80, el = $('ptr');
+    PTR.y0 = null; el.classList.remove('drag', 'ready'); el.style.transform = ''; el.style.opacity = '';
+    if (go) reload();
+  });
+
   // ---------- misc ----------
   $('curToggle').onclick = function () { S.disp = S.disp === 'MYR' ? 'VND' : 'MYR'; store(CUR_KEY, S.disp); render(); };
-  $('refresh').onclick = reload;
   var PRIV_KEY = 'bt-privacy-' + WHO;
   function setPrivacy(on) {
     S.privacy = !!on; store(PRIV_KEY, on ? '1' : null);
