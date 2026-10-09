@@ -589,7 +589,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       <section class="panel">
         <h3>Starting from</h3>
         <div class="goal-grid">
-          <div><span class="muted" id="gStartL">Starting amount</span><span class="num" id="gStart"></span></div>
+          <div><label for="gStart" class="muted" id="gStartL">Starting amount</label><input class="input num slim" id="gStart" data-num inputmode="decimal" autocomplete="off" placeholder="0"></div>
           <div><span class="muted" id="gYtdL"></span><span class="num" id="gYtd"></span></div>
         </div>
         <div class="field">
@@ -2043,7 +2043,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     var by = savedByYear(w), cy = String(budgetYear()), past = 0;
     Object.keys(by).forEach(function (y) { if (y < cy) past += by[y]; });
     var gp = plansOf(w).grow || {}, pm = planMonthly(w);
-    return { past: past, ytd: by[cy] || 0, monthly: gp.monthly != null ? +gp.monthly : pm.v, typed: gp.monthly != null, pm: pm,
+    return { past: gp.start != null ? +gp.start : past, ytd: by[cy] || 0, monthly: gp.monthly != null ? +gp.monthly : pm.v, typed: gp.monthly != null, pm: pm,
       rate: gp.rate != null ? +gp.rate : 5, years: gp.years != null ? +gp.years : 10 };
   }
   // Month by month with the return compounded monthly; one point per year.
@@ -2087,7 +2087,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
     $('gYrsT').textContent = g.years + ' year' + (g.years === 1 ? '' : 's');
     $('gTotal').textContent = whole(last.bal, OWN);
     $('gSplit').innerHTML = esc(whole(last.put, OWN)) + ' put in, <span class="ok-text">' + esc(whole(last.bal - last.put, OWN)) + '</span> from growth';
-    $('gStart').textContent = whole(g.past, OWN);
+    setIn('gStart', Math.round(g.past));
     $('gYtdL').textContent = 'Saved ' + cy + ' so far';
     $('gYtd').textContent = whole(g.ytd, OWN);
     $('gMonL').textContent = 'Add each month (' + OWN + ')';
@@ -2098,6 +2098,7 @@ label, .lbl { font-size: 13px; font-weight: 500; color: var(--ink-2); }
       { top: pts.map(function (q) { return q.bal; }), color: 'var(--accent)', w: 2.5 }], cy, OWN);
   }
   function growSave(patch) { saveDraft('grow', Object.assign({}, plansOf(WHO).grow || {}, patch)); renderGrow(); }
+  $('gStart').addEventListener('input', function () { var v = numIn('gStart'); growSave({ start: v === '' ? null : v }); });
   $('gMon').addEventListener('input', function () { var v = numIn('gMon'); growSave({ monthly: v === '' ? null : v }); });
   $('gRate').addEventListener('input', function () { growSave({ rate: +this.value }); });
   $('gYrs').addEventListener('input', function () { growSave({ years: +this.value }); });
